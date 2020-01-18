@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <link rel="stylesheet" href="bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="css/font-awesome.min.css">
+    <link rel="stylesheet" href="css/theme.css">
+    <style>
+
+    </style>
+</head>
+<body>
+<div class="navbar-wrapper">
+    <div class="container">
+        <nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+            <div class="container-fluid">
+                <div class="navbar-header">
+                    <div><a class="navbar-brand" style="font-size:32px;" href="/index">轮回世界</a></div>
+                </div>
+                <div id="navbar" class="navbar-collapse collapse">
+                    <ul class="nav navbar-nav navbar-right">
+                        <li style="padding-top:8px;">
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-default btn-success dropdown-toggle" data-toggle="dropdown">
+                                    <p style="display: none" id="memberId" th:value="${memberId}"></p>
+                                    <i class="glyphicon glyphicon-user" th:utext="${nickname}"></i><span class="caret"></span>
+                                </button>
+                                <ul class="dropdown-menu" role="menu">
+                                    <li><a href="/toUser"><i class="glyphicon glyphicon-cog"></i> 个人中心</a></li>
+                                    <li><a href="#"><i class="glyphicon glyphicon-comment"></i> 消息</a></li>
+                                    <li class="divider"></li>
+                                    <li><a href="/delLogin"><i class="glyphicon glyphicon-off"></i> 退出系统</a></li>
+                                </ul>
+                            </div>
+                        </li>
+                        <li style="margin-left:10px;padding-top:8px;">
+                            <button type="button" class="btn btn-default btn-danger">
+                                <span class="glyphicon glyphicon-question-sign"></span> 帮助
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+
+    </div>
+</div>
+<div class="container">
+    <div class="row clearfix">
+        <div class="col-sm-3 col-md-3 column">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="thumbnail" style="    border-radius: 0px;">
+                        <img src="img/services-box1.jpg" class="img-thumbnail" alt="">
+                        <div class="caption" style="text-align:center;">
+                            <h3 th:utext="${nickname}">
+                                ZhangSan
+                            </h3>
+                            <span class="label label-danger" onclick="window.location.href='#'">补全个人信息</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="list-group">
+                <div class="list-group-item active">
+                    资产总览<span class="badge"><i class="glyphicon glyphicon-chevron-right"></i></span>
+                </div>
+                <div class="list-group-item " style="cursor:pointer;" onclick="window.location.href='#'">
+                    我的角色<span class="badge"><i class="glyphicon glyphicon-chevron-right"></i></span>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-9 col-md-9 column">
+            <blockquote style="border-left: 5px solid #f60;color:#f60;padding: 0 0 0 20px;">
+                <b>
+                    我的道具
+                </b>
+            </blockquote>
+            <div id="boxDiv">
+                <div th:unless="${packVo}==null" id="popBox">
+                    <div class="col-md-12 column" style="margin-top:10px;padding:0;">
+                        <div class="content" align="center">
+                            <table class="table-bordered" style="text-align:center;" id="packsack">
+                                <tr style="height: 40px" th:each="propListss:${packVo.propLists}" align="center">
+                                    <td th:id="${gameProp.id}" th:each="gameProp:${propListss}"
+                                        th:utext="${gameProp.propName}+'<sub>'+${gameProp.theNumber}+'</sub>'" th:value="${gameProp.theNumber}"
+                                        th:title="${gameProp.propDescribe}"
+                                        style="width: 40px"></td>
+                                </tr>
+                            </table>
+                        </div>
+                        <br>
+                        <br>
+                        <br>
+                        <br>
+                        <div th:unless="${packVo.propLists}==null" align="center">
+                            <button id="porpUse" onclick="propUse()">使用</button>
+                            <button id="porpDiscarded" onclick="porpDiscarded()">丢弃</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <blockquote style="border-left: 5px solid #f60;color:#f60;padding: 0 0 0 20px;">
+                <b>
+                    我的资产
+                </b>
+            </blockquote>
+            <div>
+                <p th:utext="'轮回积分：'+${user.integral}"></p>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="jquery/jquery-2.1.1.min.js"></script>
+<script src="bootstrap/js/bootstrap.min.js"></script>
+<script src="script/docs.min.js"></script>
+<script src="script/back-to-top.js"></script>
+<script src="script/echarts.js"></script>
+
+<script type="text/javascript">
+    $(document).ready(function(){
+        $("#boxDiv").delegate("td","click",function(){
+            alert("1")
+            var bgColor = this.bgColor;
+            if (bgColor == "#696969"){
+                this.bgColor = "";
+            }else {
+                this.bgColor = "#696969";
+            }
+        })
+
+        getPacksack();
+
+    })
+    /*获取背包道具*/
+    function getPacksack(){
+        var userId = $("#memberId").attr("value");
+        $.post("/getUserPacksack",{userId:userId},function (ResultEntity){
+            if (ResultEntity.result == "SUCCESS"){
+                //刷新背包
+                var data = ResultEntity.data;
+
+                var content = '';
+                content += "            <div id=\"popBox\">\n" +
+                    "                <div class=\"content\" align=\"center\">\n" +
+                    "                    <table class=\"table-bordered\" style=\"text-align:center;\" id=\"packsack\">";
+
+                $.each(data,function (i,n) {
+                    content += "<tr style=\"height: 40px\" align=\"center\">"
+
+                    $.each(n,function (i,m) {
+                        content += "<td id='"+m.id+"'";
+                        content += "value='"+m.theNumber+"'";
+                        content += "title='"+m.propDescribe+"'"+" style=\"width: 40px\">"
+                        content += m.propName
+                        content += '<sub>'+m.theNumber+'</sub>'
+                        content += "</td>"
+                    })
+
+                    content += "</tr>"
+                })
+
+                content += "</table>\n" +
+                    "                </div>\n" +
+                    "                <br>\n" +
+                    "                <br>\n" +
+                    "                <br>\n" +
+                    "                <br>\n" +
+                    "                <div align=\"center\">\n" +
+                    "                    <button id=\"porpUse\" onclick=\"propUse()\">使用</button>\n" +
+                    "                    <button id=\"porpDiscarded\" onclick=\"porpDiscarded()\">丢弃</button>\n" +
+                    "                </div>" +
+                    "            </div>\n" +
+                    "        </div>";
+                $("#boxDiv").html(content);
+            }else {
+                $("#boxDiv").html("背包为空");
+            }
+        })
+    }
+
+    /*使用道具*/
+    function propUse() {
+        var userId = $("#memberId").attr("value");
+        var attr = $("#packsack td[bgcolor='#696969']");
+        var attrIds = [];
+        for (var i = 0;i<attr.length;i++){
+            attrIds[i]=attr[i].id;
+        }
+        var attrId = JSON.stringify(attrIds);
+        $.post("/userPropUse",{userId:userId,attrId:attrId},function (ResultEntity) {
+            if (ResultEntity.result == "SUCCESS"){
+                if (ResultEntity.message!=null){
+                    $("#fighting").append(ResultEntity.message)
+                    getPacksack();
+                }
+            }else {
+                layer.msg(ResultEntity.message, {time:1500, icon:5, shift:6});
+            }
+        })
+    }
+
+    /*丢弃道具*/
+    function porpDiscarded() {
+        var userId = $("#memberId").attr("value");
+        var attr = $("#packsack td[bgcolor='#696969']");
+        var attrIds = [];
+        for (var i = 0;i<attr.length;i++){
+            attrIds[i]=attr[i].id;
+        }
+        var attrId = JSON.stringify(attrIds);
+        $.post("/userPropDiscarded",{roleId:roleId,attrId:attrId},function (ResultEntity) {
+            if (ResultEntity.result == "SUCCESS"){
+                alert(ResultEntity.data);
+                getPacksack();
+            }else {
+                layer.msg(ResultEntity.message, {time:1500, icon:5, shift:6});
+            }
+        })
+    }
+
+</script>
+</body>
+</html>

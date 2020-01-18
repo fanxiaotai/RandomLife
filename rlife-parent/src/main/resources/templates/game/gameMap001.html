@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+    <p id="1" th:value="${wordId}"></p>
+</body>
+<script src="jquery/jquery-2.1.1.min.js"></script>
+<script src="bootstrap/js/bootstrap.min.js"></script>
+<script src="script/docs.min.js"></script>
+<script type="text/javascript" src="bootstrap/js/button.js"></script>
+<script type="text/javascript" src="jquery/layer/layer.js"></script>
+<script type="text/javascript">
+    $(document).ready(function(){
+        layer.confirm("检测到上次游戏未完成，是否继续",  {icon: 3, title:'提示'}, function(cindex){
+            layer.close(cindex);
+            window.location.href="ThenGameMap";
+        }, function(cindex){
+            layer.close(cindex);
+            var wordId = $("#1").attr("value");
+            window.location.href="NewGameMap?wordId="+wordId;
+        });
+    })
+</script>
+</html>

@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.fyt.rlife.rlife.mapper.SkillMapper">
+
+    <select id="selectByRoleId" resultMap="selectByRoleIdMap">
+        SELECT
+            sk.id as sk_id,skill_name,skill_describe,skill_leave,skill_initiative,skill_consume
+        FROM
+            skill sk,role_skill rsk
+        where
+            sk.id = rsk.skill_id
+            AND
+            rsk.role_id = #{roleId}
+    </select>
+
+   <resultMap id="selectByRoleIdMap" type="com.fyt.rlife.rlife.bean.game.common.Skill">
+        <id column="sk_id" property="id"></id>
+        <result column="skill_name" property="skillName"></result>
+        <result column="skill_describe" property="skillDescribe"></result>
+        <result column="skill_leave" property="skillLeave"></result>
+        <result column="skill_initiative" property="skillInitiative"></result>
+        <result column="skill_consume" property="skillConsume"></result>
+
+    </resultMap>
+
+</mapper>

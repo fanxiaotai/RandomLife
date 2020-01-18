@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="keys" content="">
+    <meta name="author" content="">
+	<link rel="stylesheet" href="/bootstrap/css/bootstrap.min.css">
+	<link rel="stylesheet" href="/css/font-awesome.min.css">
+	<link rel="stylesheet" href="/css/login.css">
+	<style>
+
+	</style>
+  </head>
+  <body>
+  <input style="display: none" id="ReturnUrl" th:value="${ReturnUrl}">
+    <nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+        <div class="container">
+            <div class="navbar-header">
+                <div><a class="navbar-brand" href="../index.html" style="font-size:32px;">主神空间</a></div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+
+      <form class="form-signin" role="form">
+        <h2 class="form-signin-heading"><i class="glyphicon glyphicon-log-in"></i> 用户登录</h2>
+		  <div class="form-group has-success has-feedback">
+			<input type="text" class="form-control" id="username" placeholder="请输入登录账号" autofocus>
+			<span class="glyphicon glyphicon-user form-control-feedback"></span>
+		  </div>
+		  <div class="form-group has-success has-feedback">
+			<input type="text" class="form-control" id="userpswd" placeholder="请输入登录密码" style="margin-top:10px;">
+			<span class="glyphicon glyphicon-lock form-control-feedback"></span>
+		  </div>
+        <div class="checkbox">
+          <label>
+            <input type="checkbox" value="remember-me"> 记住我
+          </label>
+            <label style="float:right">
+                <a href="/toLoginPhone">手机号登陆</a>
+            </label>
+          <br>
+          <label>
+            <a href="">忘记密码</a>
+          </label>
+          <label style="float:right">
+            <a href="/toReg">我要注册</a>
+          </label>
+        </div>
+        <a class="btn btn-lg btn-success btn-block" onclick="doLogin()" > 登录</a>
+      </form>
+    </div>
+    <script src="/jquery/jquery-2.1.1.min.js"></script>
+    <script src="/bootstrap/js/bootstrap.min.js"></script>
+    <script>
+        function doLogin(){
+            var username = $("#username").val();
+            var userpswd = $("#userpswd").val();
+            var url = location.search; //获取url中"?"符后的字串
+            var theRequest = new Object();
+            var number = url.lastIndexOf("/");
+            theRequest = url.substring(number+1);
+            $.post("/login",{"username":username,"userpswd":userpswd},function (ResultEntity) {
+                if (ResultEntity.result == "SUCCESS"){
+                    alert("登陆成功");
+                    //跳转到首页
+                    window.location.href = "index";
+                }else {
+                    alert(ResultEntity.message);
+                }
+            })
+        }
+    </script>
+  </body>
+</html>

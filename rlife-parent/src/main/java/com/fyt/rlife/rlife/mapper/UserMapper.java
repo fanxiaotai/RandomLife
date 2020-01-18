@@ -1,6 +1,6 @@
 package com.fyt.rlife.rlife.mapper;
 
-import com.fyt.rlife.rlife.bean.TUser;
+import com.fyt.rlife.rlife.bean.User;
 import org.springframework.stereotype.Repository;
 import tk.mybatis.mapper.common.Mapper;
 
@@ -10,5 +10,5 @@ import tk.mybatis.mapper.common.Mapper;
  * @Version 1.0
  */
 @Repository
-public interface UserMapper extends Mapper<TUser> {
+public interface UserMapper extends Mapper<User> {
 }

@@ -1,0 +1,496 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <link rel="stylesheet" href="bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="css/font-awesome.min.css">
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/buttons.css">
+
+    <style>
+        .tree li {
+            list-style-type: none;
+            cursor:pointer;
+        }
+        table tbody tr:nth-child(odd){background:#F4F4F4;}
+        table tbody td:nth-child(even){color:#C00;}
+
+        /*背景层*/
+        #popLayer {
+            display: none;
+            background-color: #B3B3B3;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+            z-index: 1001;
+            width: 100%;
+            height: 100%;
+            position:fixed;
+            -moz-opacity: 0.8;
+            opacity:.80;
+            filter: alpha(opacity=80);/* 只支持IE6、7、8、9 */
+        }
+
+        /*弹出层*/
+        #popBox {
+            display: none;
+            background-color: #FFFFFF;
+            z-index: 1002;
+            width: 80%;
+            height: 80%;
+            position:fixed;
+            top:0;
+            right:0;
+            left:0;
+            bottom:0;
+            margin:auto;
+        }
+
+        /*关闭按钮*/
+        #popBox .close a {
+            text-decoration: none;
+            color: #2D2C3B;
+        }
+
+        #popBox .content{
+            text-align: right;
+            margin-right: 5px;
+            background-color: #F8F8F8;
+        }
+
+    </style>
+</head>
+
+<body>
+<div id="popLayer"></div>
+<div id="popBox">
+    <div class="close">
+        <a href="javascript:void(0)" onclick="closeBox()">关闭</a>
+    </div>
+    <div class="content" align="center">
+        <table class="table-bordered" id="packsack" align="center">
+            <tr style="height: 40px" th:each="propListss:${packVo.propLists}" align="center">
+                <td th:id="${gameProp.id}" th:each="gameProp:${propListss}"
+                    th:utext="${gameProp.propName}+'<sub>'+${gameProp.theNumber}+'</sub>'" th:value="${gameProp.theNumber}"
+                    th:title="${gameProp.propDescribe}"
+                    style="width: 40px"></td>
+            </tr>
+        </table>
+    </div>
+    <br>
+    <br>
+    <br>
+    <br>
+    <div align="center">
+        <button id="porpUse" onclick="propUse()">使用</button>
+        <button id="porpSynthetic" onclick="propSynthetic()">合成</button>
+        <button id="porpDiscarded" onclick="porpDiscarded()">丢弃</button>
+    </div>
+</div>
+
+<nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            <div><a class="navbar-brand" style="font-size:32px;" href="/index">轮回世界</a></div>
+        </div>
+        <div id="navbar" class="navbar-collapse collapse">
+            <ul class="nav navbar-nav navbar-right">
+                <li style="padding-top:8px;">
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-default btn-success dropdown-toggle" data-toggle="dropdown">
+                            <i class="glyphicon glyphicon-user" th:utext="${nickname}"></i><span class="caret"></span>
+                        </button>
+                        <ul class="dropdown-menu" role="menu">
+                            <li><a href="/toUser"><i class="glyphicon glyphicon-cog"></i> 个人中心</a></li>
+                            <li><a href="#"><i class="glyphicon glyphicon-comment"></i> 消息</a></li>
+                            <li class="divider"></li>
+                            <li><a href="/delLogin"><i class="glyphicon glyphicon-off"></i> 退出系统</a></li>
+                        </ul>
+                    </div>
+                </li>
+                <li style="margin-left:10px;padding-top:8px;">
+                    <button type="button" class="btn btn-default btn-danger">
+                        <span class="glyphicon glyphicon-question-sign"></span> 帮助
+                    </button>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-sm-3 col-md-3 sidebar" style="width: 22.5%">
+            <p id="roleName" th:utext="'角色名称：'+${role.nickname}" style="position:relative;left:20%;top: 5%">测试角色</p>
+            <p id="roleId" th:value="${role.id}" th:utext="'角色编号：'+${role.id}" style="position:relative;left:20%;top: 5%">测试角色</p>
+            <p th:utext="'角色属性：'" style="position:relative;left:20%;top: 5%">测试角色</p>
+            <p id="roleExp" th:value="${role.exp}" th:utext="'当前经验：'+${role.exp}+'<button onclick=&quot;leaveUP()&quot;>升级</button>'" style="position:relative;left:20%;top: 5%">测试角色</p>
+            <p id="roleLeaveExp" th:value="${role.leaveExp}" th:utext="'升级经验：'+${role.leaveExp}" style="position:relative;left:20%;top: 5%">测试角色</p>
+            <p id="roleLeave" th:value="${role.roleLeave}" th:utext="'角色等级：'+${role.roleLeave}" style="position:relative;left:20%;top: 5%">测试角色</p>
+            <p id="rolePhysical" th:value="${role.physical}" th:utext="'体质：'+${role.physical}+'&nbsp;'+'<button id=&quot;physicalButton&quot; class=&quot;button button-primary button-circle button-tiny&quot; onclick=&quot;physical()&quot;>+</button>'" style="position:relative;left:20%;top: 5%">测试角色</p>
+            <p id="rolePower" th:value="${role.power}" th:utext="'力量：'+${role.power}+'&nbsp;'+'<button id=&quot;powerButton&quot; class=&quot;button button-primary button-circle button-tiny&quot; onclick=&quot;powers()&quot;>+</button>'" style="position:relative;left:20%;top: 5%">测试角色</p>
+            <p id="roleAgility" th:value="${role.agility}" th:utext="'敏捷：'+${role.agility}+'&nbsp;'+'<button id=&quot;agilityButton&quot; class=&quot;button button-primary button-circle button-tiny&quot; onclick=&quot;agility()&quot;>+</button>'" style="position:relative;left:20%;top: 5%">测试角色</p>
+            <p id="roleMind" th:value="${role.mind}" th:utext="'精神：'+${role.mind}+'&nbsp;'+'<button id=&quot;mindButton&quot; class=&quot;button button-primary button-circle button-tiny&quot; onclick=&quot;mind()&quot;>+</button>'" style="position:relative;left:20%;top: 5%">测试角色</p>
+            <p id="roleFreelyDistributable" th:value="${role.freelyDistributable}" th:utext="'可自由分配属性点：'+${role.freelyDistributable}" style="position:relative;left:20%;top: 5%" >测试角色</p>
+            <p id="roleLife" th:value="${role.life}" th:utext="'血量：'+${role.life}" style="position:relative;left:20%;top: 5%">测试角色</p>
+            <p id="roleMagic" th:value="${role.magic}" th:utext="'魔法：'+${role.magic}" style="position:relative;left:20%;top: 5%">测试角色</p>
+            <p id="roleAttack" th:value="${role.attack}" th:utext="'攻击：'+${role.attack}" style="position:relative;left:20%;top: 5%">测试角色</p>
+            <p id="roleDefense" th:value="${role.defense}" th:utext="'防御：'+${role.defense}" style="position:relative;left:20%;top: 5%">测试角色</p>
+            <p id="roleAttackSpeed" th:value="${role.attackSpeed}" th:utext="'攻速：'+${role.attackSpeed}" style="position:relative;left:20%;top: 5%">测试角色</p>
+            <p id="roleMoveSpeed" th:value="${role.moveSpeed}" th:utext="'移速：'+${role.moveSpeed}" style="position:relative;left:20%;top: 5%">测试角色</p>
+            <p id="roleDef" th:value="${role.def}" th:utext="'魔防：'+${role.def}" style="position:relative;left:20%;top: 5%">测试角色</p>
+            <p id="roleTenacity" th:value="${role.tenacity}" th:utext="'韧性：'+${role.tenacity}" style="position:relative;left:20%;top: 5%">测试角色</p>
+            <p style="position:relative;left:20%;top: 5%">
+                <button name="popBox" onclick="popBox()">背包</button>
+            </p>
+            <p style="position:relative;top: 5%">
+                <textarea id="fighting" cols="45" readonly="readonly" rows="8"></textarea>
+            </p>
+        </div>
+        <div class="col-sm-9 col-sm-offset-3 col-md-9 col-md-offset-3 main" style="width: 1050px">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title"><i class="glyphicon glyphicon-th"></i> 地图</h3>
+                </div>
+                <div class="panel-body">
+                    <div class="table-responsive">
+                        <table class="table-bordered" id="mapTable">
+                            <tr th:each="sa:${a}" style="height: 60px" align="center">
+                                <td th:id="${ssa.x}+','+${ssa.y}" th:each="ssa:${sa}" th:utext="${ssa.data}" th:value="${ssa.data}" style="width: 60px"></td>
+                            </tr>
+                        </table>
+                        <br>
+                        <p>注：数字代表地形，其中1表示平原，2表示草原，3表示红杉森林，4表示黑森林，5表示沼泽</p>
+                        <p id="rounds" th:utext="'当前回合数：'+${rounds}" th:value="${rounds}"></p>
+                        <p>拥有的技能：</p>
+                        <div id="skill">
+                            <div th:each="skill:${role.skillList}">
+                                <text th:utext="${skill.skillName}+':'
+                           +${skill.skillDescribe}+' LV'+${skill.skillLeave}+' 消耗：'+${skill.skillConsume}"></text>
+                                <button th:id="${skill.id}" th:if="${skill.skillInitiative}=='1'">使用</button>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="jquery/jquery-2.1.1.min.js"></script>
+<script src="bootstrap/js/bootstrap.min.js"></script>
+<script src="script/docs.min.js"></script>
+<script type="text/javascript" src="bootstrap/js/button.js"></script>
+<script type="text/javascript" src="jquery/layer/layer.js"></script>
+<script type="text/javascript">
+    $(document).ready(function(){
+        //角色移动,棋盘重写
+        $("#mapTable").delegate("td","click",function(){
+            var attr = this.id;
+            var roleId = $("#roleId").attr("value");
+            var roleMoveSpeed = $("#roleMoveSpeed").attr("value");
+            var rounds = $("#rounds").attr("value");
+            $.post("/next",{attr:attr,roleId:roleId,roleMoveSpeed:roleMoveSpeed},function (ResultEntity) {
+                if (ResultEntity.result == "SUCCESS"){
+                    if (ResultEntity.message+''.startsWith("战斗信息")){
+                        $("#fighting").append(ResultEntity.message)
+                        roleAttribute();
+                    }
+                    var data = ResultEntity.data;
+
+                    var content = '';
+                    $.each(data,function (i,n) {
+                        content += "<tr style=\"height: 60px\" align=\"center\">"
+
+                        $.each(n,function (i,m) {
+                            content += "<td id='"+m.x+","+m.y+"'"+" ";
+                            content += "value='"+m.data+"'"+" style=\"width: 60px\">"
+                            content += m.data
+                            content += "</td>"
+                        })
+
+                        content += "</tr>"
+                    })
+
+                    $("#mapTable").html(content);
+                    $("#rounds").html("当前回合数："+(parseInt(rounds)+1));
+                    $("#rounds").attr("value",(parseInt(rounds)+1));
+
+                }else {
+                    if ((ResultEntity.message+"").startsWith("角色死亡")){
+                        alert(ResultEntity.message);
+                        window.location.href = "index";
+                    }
+                    alert(ResultEntity.message);
+                }
+            })
+        })
+
+        $("#packsack").delegate("td","click",function(){
+            var bgColor = this.bgColor;
+            if (bgColor == "#696969"){
+                this.bgColor = "";
+            }else {
+                this.bgColor = "#696969";
+            }
+        })
+
+        $("#skill").delegate("button","click",function(){
+            var skillId = this.id;
+            var roleId = $("#roleId").attr("value");
+            $.post("/skillUse",{roleId:roleId,skillId:skillId},function (ResultEntity) {
+                if (ResultEntity.result=="SUCCESS"){
+                    layer.msg("使用成功", {time:1000, icon:6, shift:6});
+                    roleAttribute();
+                }else {
+                    layer.msg(ResultEntity.message, {time:1500, icon:5, shift:6});
+                }
+            })
+        })
+
+    })
+
+    //体质加点
+    function physical() {
+        var roleId = $("#roleId").attr("value");
+        $.post("/physicalLittle",{roleId:roleId},function (ResultEntity) {
+            if (ResultEntity.result == "SUCCESS"){
+                $('#rolePhysical').attr("value",ResultEntity.data.physical);
+                $('#rolePhysical').html("体质："+ResultEntity.data.physical+'&nbsp;'+'<button id="physicalButton" onclick=physical()>+</button>');
+                $('#physicalButton').addClass("button button-primary button-circle button-tiny");
+
+                $('#roleLife').attr("value",ResultEntity.data.life);
+                $('#roleLife').html("生命："+ResultEntity.data.life);
+
+                $('#roleDefense').attr("value",ResultEntity.data.defense);
+                $('#roleDefense').html("防御："+ResultEntity.data.defense);
+
+                $('#roleFreelyDistributable').attr("value",ResultEntity.data.freelyDistributable);
+                $('#roleFreelyDistributable').html("可分配属性点："+ResultEntity.data.freelyDistributable);
+            }else {
+                layer.msg(ResultEntity.message, {time:1500, icon:5, shift:6});
+            }
+        })
+    }
+
+    //力量加点
+    function powers() {
+        var roleId = $("#roleId").attr("value");
+        $.post("/powerLittle",{roleId:roleId},function (ResultEntity) {
+            if (ResultEntity.result == "SUCCESS"){
+                $('#rolePower').attr("value",ResultEntity.data.power);
+                $('#rolePower').html("力量："+ResultEntity.data.power+'&nbsp;'+'<button id="powerButton" onclick=powers()>+</button>');
+                $('#powerButton').addClass("button button-primary button-circle button-tiny");
+
+                $('#roleAttack').attr("value",ResultEntity.data.attack);
+                $('#roleAttack').html("攻击："+ResultEntity.data.attack);
+
+                $('#roleFreelyDistributable').attr("value",ResultEntity.data.freelyDistributable);
+                $('#roleFreelyDistributable').html("可分配属性点："+ResultEntity.data.freelyDistributable);
+            }else {
+                layer.msg(ResultEntity.message, {time:1500, icon:5, shift:6});
+            }
+        })
+    }
+
+    //敏捷加点
+    function agility() {
+        var roleId = $("#roleId").attr("value");
+        $.post("/agilityLittle",{roleId:roleId},function (ResultEntity) {
+            if (ResultEntity.result == "SUCCESS"){
+                $('#roleAgility').attr("value",ResultEntity.data.agility);
+                $('#roleAgility').html("敏捷："+ResultEntity.data.agility+'&nbsp;'+'<button id="agilityButton" onclick=agility()>+</button>');
+                $('#agilityButton').addClass("button button-primary button-circle button-tiny");
+
+                $('#roleAttackSpeed').attr("value",ResultEntity.data.attackSpeed);
+                $('#roleAttackSpeed').html("攻速："+ResultEntity.data.attackSpeed);
+
+                $('#roleAttack').attr("value",ResultEntity.data.attack);
+                $('#roleAttack').html("攻击："+ResultEntity.data.attack);
+
+                $('#roleFreelyDistributable').attr("value",ResultEntity.data.freelyDistributable);
+                $('#roleFreelyDistributable').html("可分配属性点："+ResultEntity.data.freelyDistributable);
+            }else {
+                alert(ResultEntity.message);
+                layer.msg(ResultEntity.message, {time:1500, icon:5, shift:6});
+            }
+        })
+    }
+
+    //精神加点
+    function mind() {
+        var roleId = $("#roleId").attr("value");
+        $.post("/mindLittle",{roleId:roleId},function (ResultEntity) {
+            if (ResultEntity.result == "SUCCESS"){
+                $('#roleMind').attr("value",ResultEntity.data.mind);
+                $('#roleMind').html("精神："+ResultEntity.data.mind+'&nbsp;'+'<button id="mindButton" onclick=mind()>+</button>');
+                $('#mindButton').addClass("button button-primary button-circle button-tiny");
+
+                $('#roleMagic').attr("value",ResultEntity.data.magic);
+                $('#roleMagic').html("魔法："+ResultEntity.data.magic);
+
+                $('#roleDef').attr("value",ResultEntity.data.def);
+                $('#roleDef').html("魔防："+ResultEntity.data.def);
+
+                $('#roleFreelyDistributable').attr("value",ResultEntity.data.freelyDistributable);
+                $('#roleFreelyDistributable').html("可分配属性点："+ResultEntity.data.freelyDistributable);
+            }else {
+                layer.msg(ResultEntity.message, {time:1500, icon:5, shift:6});
+            }
+        })
+    }
+
+    //升级
+    function leaveUP() {
+        var roleId = $("#roleId").attr("value");
+        $.post("/leaveUP",{roleId:roleId},function (ResultEntity) {
+            if (ResultEntity.result == "SUCCESS"){
+                $('#roleExp').attr("value",ResultEntity.data.exp);
+                $('#roleExp').html("当前经验："+ResultEntity.data.exp+'<button onclick=leaveUP()>升级</button>');
+
+                $('#roleLeaveExp').attr("value",ResultEntity.data.leaveExp);
+                $('#roleLeaveExp').html("升级经验："+ResultEntity.data.leaveExp);
+
+                $('#roleLeave').attr("value",ResultEntity.data.roleLeave);
+                $('#roleLeave').html("等级："+ResultEntity.data.roleLeave);
+
+                $('#roleFreelyDistributable').attr("value",ResultEntity.data.freelyDistributable);
+                $('#roleFreelyDistributable').html("可分配属性点："+ResultEntity.data.freelyDistributable);
+            }else {
+                layer.msg(ResultEntity.message, {time:1500, icon:5, shift:6});
+            }
+        })
+    }
+
+    //刷新当前角色的状态信息
+    function roleAttribute() {
+        var roleId = $("#roleId").attr("value");
+        $.post("/getRole",{roleId:roleId},function (ResultEntity) {
+            $('#roleExp').attr("value",ResultEntity.data.exp);
+            $('#roleExp').html("当前经验："+ResultEntity.data.exp +'<button onclick=leaveUP()>升级</button>');
+
+            $('#roleLife').attr("value",ResultEntity.data.life);
+            $('#roleLife').html("生命："+ResultEntity.data.life);
+
+            $('#roleMagic').attr("value",ResultEntity.data.magic);
+            $('#roleMagic').html("魔法："+ResultEntity.data.magic);
+        })
+    }
+
+    /*点开背包*/
+    function popBox() {
+        var popBox = document.getElementById("popBox");
+        var popLayer = document.getElementById("popLayer");
+        popBox.style.display = "block";
+        popLayer.style.display = "block";
+        getPacksack();
+    };
+
+    /*点击关闭按钮*/
+    function closeBox() {
+        var popBox = document.getElementById("popBox");
+        var popLayer = document.getElementById("popLayer");
+        popBox.style.display = "none";
+        popLayer.style.display = "none";
+    }
+    
+    /*获取背包道具*/
+    function getPacksack() {
+        var roleId = $("#roleId").attr("value");
+        $.post("/getPacksack",{roleId:roleId},function (ResultEntity){
+            if (ResultEntity.result == "SUCCESS"){
+                //刷新背包
+                var data = ResultEntity.data;
+
+                var content = '';
+                $.each(data,function (i,n) {
+                    content += "<tr style=\"height: 40px\" align=\"center\">"
+
+                    $.each(n,function (i,m) {
+                        content += "<td id='"+m.id+"'";
+                        content += "value='"+m.theNumber+"'";
+                        content += "title='"+m.propDescribe+"'"+" style=\"width: 40px\">"
+                        content += m.propName
+                        content += '<sub>'+m.theNumber+'</sub>'
+                        content += "</td>"
+                    })
+
+                    content += "</tr>"
+                })
+                $("#packsack").html(content);
+            }else {
+                $("#packsack").html("背包为空");
+            }
+        })
+    }
+
+    /*使用道具*/
+    function propUse() {
+        var roleId = $("#roleId").attr("value");
+        var attr = $("#packsack td[bgcolor='#696969']");
+        var attrIds = [];
+        for (var i = 0;i<attr.length;i++){
+            attrIds[i]=attr[i].id;
+        }
+        var attrId = JSON.stringify(attrIds);
+        $.post("/propUse",{roleId:roleId,attrId:attrId},function (ResultEntity) {
+            if (ResultEntity.result == "SUCCESS"){
+                if (ResultEntity.message!=null){
+                    $("#fighting").append(ResultEntity.message)
+                    roleAttribute();
+                    getPacksack();
+                }
+            }else {
+                layer.msg(ResultEntity.message, {time:1500, icon:5, shift:6});
+            }
+        })
+    }
+
+    /*合成道具*/
+    function propSynthetic() {
+        var roleId = $("#roleId").attr("value");
+        var attr = $("#packsack td[bgcolor='#696969']");
+        var attrIds = [];
+        for (var i = 0;i<attr.length;i++){
+            attrIds[i]=attr[i].id;
+        }
+        var attrId = JSON.stringify(attrIds);
+        $.post("/propSynthetic",{roleId:roleId,attrId:attrId},function (ResultEntity) {
+            if (ResultEntity.result == "SUCCESS"){
+                getPacksack();
+            }else {
+                layer.msg(ResultEntity.message, {time:1500, icon:5, shift:6});
+            }
+        })
+    }
+
+    /*丢弃道具*/
+    function porpDiscarded() {
+        var roleId = $("#roleId").attr("value");
+        var attr = $("#packsack td[bgcolor='#696969']");
+        var attrIds = [];
+        for (var i = 0;i<attr.length;i++){
+            attrIds[i]=attr[i].id;
+        }
+        var attrId = JSON.stringify(attrIds);
+        $.post("/propDiscarded",{roleId:roleId,attrId:attrId},function (ResultEntity) {
+            if (ResultEntity.result == "SUCCESS"){
+                alert(ResultEntity.data);
+                getPacksack();
+            }else {
+                layer.msg(ResultEntity.message, {time:1500, icon:5, shift:6});
+            }
+        })
+    }
+
+</script>
+</body>
+</html>
