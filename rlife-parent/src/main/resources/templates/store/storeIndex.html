@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- 上述3个meta标签*必须*放在最前面，任何其他内容都*必须*跟随其后！ -->
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <title>兑换商店</title>
+    <!-- Bootstrap core CSS -->
+    <link rel="stylesheet" href="/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="css/font-awesome.min.css">
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/buttons.css">
+
+    <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+    <link href="/css/ie10-viewport-bug-workaround.css" rel="stylesheet">
+
+    <!-- Custom styles for this template -->
+    <link href="/css/justified-nav.css" rel="stylesheet">
+
+    <!-- Just for debugging purposes. Don't actually copy these 2 lines! -->
+    <!--[if lt IE 9]>--><!--<script src="../../assets/js/ie8-responsive-file-warning.js"></script><![endif]-->
+    <script src="/bootstrap/js/ie-emulation-modes-warning.js"></script>
+
+
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>-->
+    <!--<script src="https://cdn.bootcss.com/html5shiv/3.7.3/html5shiv.min.js"></script>
+    <script src="https://cdn.bootcss.com/respond.js/1.4.2/respond.min.js"></script>-->
+    <!--<![endif]-->
+</head>
+
+<body>
+
+
+<div class="container">
+
+    <!-- The justified navigation menu is meant for single line per list item.
+         Multiple lines will require custom code not provided by Bootstrap. -->
+    <div class="masthead">
+        <nav th:if="${memberId}==null" class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+            <div class="container">
+                <div class="navbar-header">
+                    <div><a class="navbar-brand" href="/index" style="font-size:32px;">主神空间</a></div>
+                </div>
+                <div id="navbar1" class="navbar-collapse collapse" style="float:right;">
+                    <ul class="nav navbar-nav navbar-right">
+                        <li><a href="/toLogin">登录</a></li>
+                        <li><a href="/toReg">注册</a></li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+        <nav th:unless="${memberId}==null" class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+            <div class="container-fluid">
+                <div class="navbar-header">
+                    <div><a class="navbar-brand" style="font-size:32px;" href="/index">轮回世界</a></div>
+                </div>
+                <div id="navbar" class="navbar-collapse collapse">
+                    <ul class="nav navbar-nav navbar-right">
+                        <li style="padding-top:8px;">
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-default btn-success dropdown-toggle" data-toggle="dropdown">
+                                    <i class="glyphicon glyphicon-user" th:utext="${nickname}"></i><span class="caret"></span>
+                                </button>
+                                <ul class="dropdown-menu" role="menu">
+                                    <li><a href="/toUser"><i class="glyphicon glyphicon-cog"></i> 个人中心</a></li>
+                                    <li><a href="#"><i class="glyphicon glyphicon-comment"></i> 消息</a></li>
+                                    <li class="divider"></li>
+                                    <li><a href="/delLogin"><i class="glyphicon glyphicon-off"></i> 退出系统</a></li>
+                                </ul>
+                            </div>
+                        </li>
+                        <li style="margin-left:10px;padding-top:8px;">
+                            <button type="button" class="btn btn-default btn-danger">
+                                <span class="glyphicon glyphicon-question-sign"></span> 帮助
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+        <br>
+        <br>
+        <br>
+        <nav>
+            <ul class="nav nav-justified">
+                <li><a href="/index">首页</a></li>
+                <li><a href="#">轮回广场</a></li>
+                <li class="active"><a href="#">兑换大厅</a></li>
+                <li><a href="/toBuyProp">黑市</a></li>
+                <li><a href="#">家</a></li>
+                <li><a href="#">练武场</a></li>
+                <li><a href="#">野外狩猎</a></li>
+            </ul>
+        </nav>
+
+    </div>
+
+    <table class="table table-striped" align="center">
+        <thead>
+            <tr align="center" class="info">
+                <td>商品名称</td>
+                <td>商品价格</td>
+                <td>商品数量</td>
+                <td>
+                    <!-- <button class="btn btn-primary">
+                         兑换
+                     </button>-->
+                </td>
+            </tr>
+        </thead>
+        <tbody id="storeTbody">
+<!--        <tr align="center" th:each="gameProp:${store.gameProps}" th:title="${gameProp.propDescribe}">
+            <td th:utext="${gameProp.propName}" style="padding-top: 15px;">商品名称</td>
+            <td th:utext="${gameProp.propPrice}" style="padding-top: 15px;">商品价格</td>
+            <td style="padding-top: 15px;">
+                <button class="button button-square button-tiny" th:onclick="NumberDecrease(${gameProp.id})">
+                 -
+                </button>
+                <input th:id="${gameProp.id}" type="text" value="1" min="1" max="200" style="width: 30px;"/>
+                <button class="button button-primary button-square button-tiny" onclick="NumberAdd()">
+                 +
+                </button>
+            </td>
+            <td>
+                 <button class="btn btn-primary">
+                     兑换
+                 </button>
+            </td>
+        </tr>-->
+        </tbody>
+        <tfoot>
+            <tr>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td>
+                    <p id="nextUpdateTime">
+                </td>
+            </tr>
+        </tfoot>
+
+
+    </table>
+
+
+
+</div> <!-- /container -->
+
+<p id="memberId" th:value="${memberId}" style="display: none"></p>
+<!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+<script src="/bootstrap/js/ie10-viewport-bug-workaround.js"></script>
+<script src="jquery/jquery-2.1.1.min.js"></script>
+<script type="text/javascript" src="bootstrap/js/button.js"></script>
+<script src="bootstrap/js/bootstrap.min.js"></script>
+<script src="script/docs.min.js"></script>
+<script type="text/javascript" src="jquery/layer/layer.js"></script>
+<script type="application/javascript">
+    $(document).ready(function(){
+        getStore();
+    })
+
+    function getStore() {
+        var userId = $("#memberId").attr("value");
+        $.post("/getStoreByUserId",{userId:userId},function (ResultEntity) {
+            if (ResultEntity.result == "SUCCESS"){
+                var data = ResultEntity.data.gameProps;
+                var content = '';
+                $.each(data,function (i,n) {
+                    content += "<tr align=\"center\" title=\""+n.propDescribe+"\">\n" +
+                        "            <td style=\"padding-top: 15px;\">"+n.propName+"</td>\n" +
+                        "            <td id='"+n.id+"price' value='"+n.propPrice+"' style=\"padding-top: 15px;\">"+n.propPrice+"</td>\n" +
+                        "            <td style=\"padding-top: 15px;\">\n" +
+                        "                <button class=\"button button-square button-tiny\" onclick=\"NumberDecrease("+n.id+")\">\n" +
+                        "                 -\n" +
+                        "                </button>\n" +
+                        "                <input id=\""+n.id+"\" type=\"text\" value=\"1\" style=\"width: 30px;\" onchange='NumberChange("+n.id+")'/>\n" +
+                        "                <button class=\"button button-primary button-square button-tiny\" onclick=\"NumberAdd("+n.id+")\">\n" +
+                        "                 +\n" +
+                        "                </button>\n" +
+                        "            </td>\n" +
+                        "            <td>\n" +
+                        "                 <button class=\"btn btn-primary\" onclick='buyProp("+n.id+")'>\n" +
+                        "                     兑换\n" +
+                        "                 </button>\n" +
+                        "            </td>\n" +
+                        "        </tr>";
+                });
+                $("#storeTbody").html(content);
+
+                var nextUpdateTime = ResultEntity.data.lastUpdate;
+                var s2 = Number(nextUpdateTime.substring(11,13))+8+6;
+                if (s2==24){
+                    s2="00";
+                }
+                $("#nextUpdateTime").html("下次刷新时间："+s2+":00:00")
+            }else {
+                layer.msg(ResultEntity.message, {time:1500, icon:5, shift:6});
+            }
+        })
+    }
+
+    //购买道具数量--(按钮触发)
+    function NumberDecrease(propId) {
+        var propInput = $("#"+propId+"");
+        var propPriceSum = $("#"+propId+"price").text();
+        var propPrice = $("#"+propId+"price").attr("value");
+        var theNumber = propInput.attr("value");
+        if (theNumber>1){
+            theNumber--
+            propPriceSum = Number(propPriceSum) -Number(propPrice)
+        }else {
+            theNumber = 1;
+        }
+        propInput.attr("value",theNumber)
+        propInput.val(theNumber);
+        $("#"+propId+"price").text(propPriceSum)
+    }
+
+    //购买道具数量++（按钮触发）
+    function NumberAdd(propId) {
+        var propInput = $("#"+propId+"");
+        var propPriceSum = $("#"+propId+"price").text();
+        var propPrice = $("#"+propId+"price").attr("value");
+        var theNumber = propInput.attr("value");
+        if (theNumber>=200){
+            theNumber = 200;
+        }else {
+            theNumber++;
+            propPriceSum = Number(propPriceSum) +Number(propPrice)
+        }
+        propInput.attr("value",theNumber)
+        propInput.val(theNumber);
+        $("#"+propId+"price").text(propPriceSum)
+    }
+
+    //购买道具数量++（按钮触发）
+    function NumberChange(propId) {
+        var propInput = $("#"+propId+"");
+        var propPriceSum = $("#"+propId+"price").text();
+        var propPrice = $("#"+propId+"price").attr("value");
+        var theNumber = propInput.val();
+        if (theNumber>200){
+            theNumber = 200;
+        }else {
+            propPriceSum = Number(propPrice) * Number(theNumber)
+        }
+        propInput.attr("value",theNumber)
+        propInput.val(theNumber);
+        $("#"+propId+"price").text(propPriceSum)
+    }
+
+    //兑换按钮
+    function buyProp(propId) {
+        sleep(1000);
+        var theNumber = $("#"+propId+"").attr("value")
+        $.post("/buyProp",{propId:propId,theNumber:theNumber},function (ResultEntity) {
+            if (ResultEntity.result == "SUCCESS"){
+                layer.msg("兑换成功", {time:1500, icon:6, shift:5});
+            }else {
+                layer.msg(ResultEntity.message, {time:1500, icon:5, shift:6});
+            }
+        })
+    }
+
+    /*睡眠*/
+    function sleep(numberMillis) {
+        var now = new Date();
+        var exitTime = now.getTime() + numberMillis;
+        while (true) {
+            now = new Date();
+            if (now.getTime() > exitTime)
+                return;
+        }
+    }
+</script>
+</body>
+</html>

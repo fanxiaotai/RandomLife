@@ -17,7 +17,7 @@
 
     <select id="selectUserPacksackByUserId" resultMap="selectPacksackByRoleIdMap">
         SELECT
-            p.id as p_id,p.user_id as p_role_id,gp.id as gp_id,prop_name,prop_describe,pp.the_number as the_number
+            p.id as p_id,p.user_id as p_role_id,gp.id as gp_id,prop_name,prop_describe,pp.the_number as the_number,gp.prop_price
         FROM
             packsack_user p,
             packsack_user_prop pp,
@@ -35,12 +35,27 @@
             AND packsack_prop.prop_id =#{propId}
     </delete>
 
+    <delete id="deleteByUserIdOrPropId">
+            DELETE FROM packsack_user_prop
+            WHERE
+            packsack_user_prop.packsack_user_id = #{packId}
+            AND packsack_user_prop.prop_id =#{propId}
+    </delete>
+
     <update id="updateByRoleIdOrPropIdLess">
         UPDATE packsack_prop
         SET packsack_prop.the_number = packsack_prop.the_number - 1
         WHERE
             packsack_prop.packsack_id = #{packId}
         AND packsack_prop.prop_id = #{propId}
+    </update>
+
+    <update id="updateByUserIdOrPropIdLess">
+        UPDATE packsack_user_prop
+        SET packsack_user_prop.the_number = packsack_user_prop.the_number - 1
+        WHERE
+            packsack_user_prop.packsack_user_id = #{packId}
+        AND packsack_user_prop.prop_id = #{propId}
     </update>
 
     <update id="updateByRoleIdOrPropIdUP">
@@ -51,9 +66,33 @@
         AND packsack_prop.prop_id = #{propId}
     </update>
 
-    <update id="instProp">
-        INSERT INTO packsack_prop(packsack_id,prop_id,the_number) VALUES(#{packId},#{propId},1)
+    <update id="updateByUserIdOrPropIdUP">
+        UPDATE packsack_user_prop
+        SET packsack_user_prop.the_number = packsack_user_prop.the_number + 1
+        WHERE
+            packsack_user_prop.packsack_user_id = #{packId}
+        AND packsack_user_prop.prop_id = #{propId}
     </update>
+
+    <update id="updateByUserIdOrPropIdUPs">
+        UPDATE packsack_user_prop
+        SET packsack_user_prop.the_number = packsack_user_prop.the_number + #{theNumber}
+        WHERE
+            packsack_user_prop.packsack_user_id = #{packId}
+        AND packsack_user_prop.prop_id = #{propId}
+    </update>
+
+    <insert id="instProp">
+        INSERT INTO packsack_prop(packsack_id,prop_id,the_number) VALUES(#{packId},#{propId},1)
+    </insert>
+
+    <insert id="instPropUserId">
+        INSERT INTO packsack_user_prop(packsack_user_id,prop_id,the_number) VALUES(#{packId},#{propId},1)
+    </insert>
+
+    <insert id="instPropUserIds">
+        INSERT INTO packsack_user_prop(packsack_user_id,prop_id,the_number) VALUES(#{packId},#{propId},#{theNumber})
+    </insert>
 
     <resultMap id="selectPacksackByRoleIdMap" type="com.fyt.rlife.rlife.bean.game.common.Packsack">
         <id column="p_id" property="id"></id>
@@ -64,6 +103,7 @@
             <result column="prop_name" property="propName"></result>
             <result column="prop_describe" property="propDescribe"></result>
             <result column="the_number" property="theNumber"></result>
+            <result column="prop_price" property="propPrice"></result>
         </collection>
 
     </resultMap>

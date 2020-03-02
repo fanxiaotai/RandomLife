@@ -2,6 +2,7 @@ package com.fyt.rlife.rlife.service.impl;
 
 import com.fyt.rlife.rlife.bean.Role;
 import com.fyt.rlife.rlife.bean.game.common.Skill;
+import com.fyt.rlife.rlife.mapper.PropLimitMapper;
 import com.fyt.rlife.rlife.mapper.RoleMapper;
 import com.fyt.rlife.rlife.mapper.SkillMapper;
 import com.fyt.rlife.rlife.service.GameMapService;
@@ -24,6 +25,8 @@ public class GameMapServiceImpl implements GameMapService {
 
     @Resource
     SkillMapper skillMapper;
+    @Resource
+    PropLimitMapper propLimitMapper;
 
     @Override
     public Role selectRoleByMemberId(String memberId) {

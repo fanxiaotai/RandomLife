@@ -9,11 +9,128 @@
     <link rel="stylesheet" href="bootstrap/css/bootstrap.min.css">
     <link rel="stylesheet" href="css/font-awesome.min.css">
     <link rel="stylesheet" href="css/theme.css">
+    <title>个人中心</title>
     <style>
+        /*背景层*/
+        #popLayer {
+            display: none;
+            background-color: #B3B3B3;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+            z-index: 1001;
+            width: 100%;
+            height: 100%;
+            position:fixed;
+            -moz-opacity: 0.8;
+            opacity:.80;
+            filter: alpha(opacity=80);/* 只支持IE6、7、8、9 */
+        }
 
+        /*弹出层*/
+        #roleNameBox {
+            display: none;
+            background-color: #FFFFFF;
+            z-index: 1002;
+            width: 80%;
+            height: 80%;
+            position:fixed;
+            top:0;
+            right:0;
+            left:0;
+            bottom:0;
+            margin:auto;
+        }
+
+        /*关闭按钮*/
+        #roleNameBox .close a {
+            text-decoration: none;
+            color: #2D2C3B;
+        }
+
+        #roleNameBox .content{
+            text-align: right;
+            margin-right: 5px;
+            background-color: #F8F8F8;
+        }
+
+        /*背景层*/
+        #roleNameLayer {
+            display: none;
+            background-color: #B3B3B3;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+            z-index: 1003;
+            width: 100%;
+            height: 100%;
+            position:fixed;
+            -moz-opacity: 0.8;
+            opacity:.80;
+            filter: alpha(opacity=80);/* 只支持IE6、7、8、9 */
+        }
+
+        /*弹出层*/
+        #createRoleNameBox {
+            display: none;
+            background-color: #FFFFFF;
+            z-index: 1004;
+            width: 80%;
+            height: 80%;
+            position:fixed;
+            top:0;
+            right:0;
+            left:0;
+            bottom:0;
+            margin:auto;
+        }
+
+        /*关闭按钮*/
+        #createRoleNameBox .close a {
+            text-decoration: none;
+            color: #2D2C3B;
+        }
+
+        #createRoleNameBox .content{
+            text-align: right;
+            margin-right: 5px;
+            background-color: #F8F8F8;
+        }
     </style>
 </head>
 <body>
+<div id="popLayer"></div>
+<div id="roleNameBox">
+    <div class="close">
+        <a href="javascript:void(0)" onclick="closeBox()">关闭</a>
+    </div>
+    <br>
+    <div align="center">
+        <ul th:unless="${roleListByUserId}==null">
+            <li th:each="role:${roleListByUserId}" >
+                <button class="btn btn-info" th:id="${role.id}" th:utext="${role.nickname}"></button>
+            </li>
+            <br>
+        </ul>
+        <p th:if="${roleListByUserId}==null">你目前没有角色</p>
+    </div>
+</div>
+
+<div id="roleNameLayer"></div>
+<div id="createRoleNameBox">
+    <div class="close">
+        <a href="javascript:void(0)" onclick="closeRoleNameBox()">关闭</a>
+    </div>
+    <br>
+    <div align="center">
+        <input id="roleName" type="text" placeholder="请输入角色姓名"/>
+        <button class="btn btn-primary" onclick="rename()">确定</button>
+
+    </div>
+</div>
+
 <div class="navbar-wrapper">
     <div class="container">
         <nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
@@ -69,7 +186,7 @@
                 <div class="list-group-item active">
                     资产总览<span class="badge"><i class="glyphicon glyphicon-chevron-right"></i></span>
                 </div>
-                <div class="list-group-item " style="cursor:pointer;" onclick="window.location.href='#'">
+                <div class="list-group-item " style="cursor:pointer;" onclick="window.location.href='toUserRole?pageNum=1&pageSize=5'">
                     我的角色<span class="badge"><i class="glyphicon glyphicon-chevron-right"></i></span>
                 </div>
             </div>
@@ -84,12 +201,11 @@
                 <div th:unless="${packVo}==null" id="popBox">
                     <div class="col-md-12 column" style="margin-top:10px;padding:0;">
                         <div class="content" align="center">
-                            <table class="table-bordered" style="text-align:center;" id="packsack">
-                                <tr style="height: 40px" th:each="propListss:${packVo.propLists}" align="center">
+                            <table class="table-bordered" id="packsack">
+                                <tr style="height: 50px" th:each="propListss:${packVo.propLists}" align="center">
                                     <td th:id="${gameProp.id}" th:each="gameProp:${propListss}"
                                         th:utext="${gameProp.propName}+'<sub>'+${gameProp.theNumber}+'</sub>'" th:value="${gameProp.theNumber}"
-                                        th:title="${gameProp.propDescribe}"
-                                        style="width: 40px"></td>
+                                        th:title="${gameProp.propDescribe}"></td>
                                 </tr>
                             </table>
                         </div>
@@ -99,7 +215,7 @@
                         <br>
                         <div th:unless="${packVo.propLists}==null" align="center">
                             <button id="porpUse" onclick="propUse()">使用</button>
-                            <button id="porpDiscarded" onclick="porpDiscarded()">丢弃</button>
+                            <button id="porpDiscarded" onclick="porpDiscarded()">出售</button>
                         </div>
                     </div>
                 </div>
@@ -110,7 +226,9 @@
                 </b>
             </blockquote>
             <div>
-                <p th:utext="'轮回积分：'+${user.integral}"></p>
+                <ul class="list-group">
+                    <li th:utext="'轮回积分：'+${user.integral}" class="list-group-item">Cras justo odio</li>
+                </ul>
             </div>
         </div>
     </div>
@@ -120,11 +238,10 @@
 <script src="script/docs.min.js"></script>
 <script src="script/back-to-top.js"></script>
 <script src="script/echarts.js"></script>
-
+<script type="text/javascript" src="jquery/layer/layer.js"></script>
 <script type="text/javascript">
     $(document).ready(function(){
         $("#boxDiv").delegate("td","click",function(){
-            alert("1")
             var bgColor = this.bgColor;
             if (bgColor == "#696969"){
                 this.bgColor = "";
@@ -133,21 +250,46 @@
             }
         })
 
+        $("#roleNameBox").delegate("button","click",function(){
+            var roleId = this.id;
+            var attr = $("#packsack td[bgcolor='#696969']");
+            var attrIds = [];
+            for (var i = 0;i<attr.length;i++){
+                attrIds[i]=attr[i].id;
+            }
+            var attrId = JSON.stringify(attrIds);
+            $.post("/userPropUse",{roleId:roleId,attrId:attrId},function (ResultEntity) {
+                if(ResultEntity.data == "改名"){
+                    determineRole();
+                    closeBox();
+                }else if (ResultEntity.result == "SUCCESS"){
+                    layer.msg("使用成功", {time:1500, icon:6, shift:5});
+                    getPacksack();
+                    closeBox();
+                }else {
+                    layer.msg(ResultEntity.message, {time:1500, icon:5, shift:6});
+                }
+            }).error(function (xhr, status, info) {
+                var text = JSON.parse(xhr.responseText);
+                layer.msg(text.message, {time:1500, icon:5, shift:6});
+            })
+        })
+
         getPacksack();
 
     })
+    
     /*获取背包道具*/
     function getPacksack(){
-        var userId = $("#memberId").attr("value");
-        $.post("/getUserPacksack",{userId:userId},function (ResultEntity){
+        $.post("/getUserPacksack",{},function (ResultEntity){
             if (ResultEntity.result == "SUCCESS"){
                 //刷新背包
                 var data = ResultEntity.data;
 
                 var content = '';
                 content += "            <div id=\"popBox\">\n" +
-                    "                <div class=\"content\" align=\"center\">\n" +
-                    "                    <table class=\"table-bordered\" style=\"text-align:center;\" id=\"packsack\">";
+                    "                <div class=\"content\">\n" +
+                    "                    <table class=\"table-bordered\" id=\"packsack\">";
 
                 $.each(data,function (i,n) {
                     content += "<tr style=\"height: 40px\" align=\"center\">"
@@ -155,7 +297,7 @@
                     $.each(n,function (i,m) {
                         content += "<td id='"+m.id+"'";
                         content += "value='"+m.theNumber+"'";
-                        content += "title='"+m.propDescribe+"'"+" style=\"width: 40px\">"
+                        content += "title='"+m.propDescribe+"'"+" style=\"width: 50px;height: 40px\">"
                         content += m.propName
                         content += '<sub>'+m.theNumber+'</sub>'
                         content += "</td>"
@@ -185,35 +327,18 @@
 
     /*使用道具*/
     function propUse() {
-        var userId = $("#memberId").attr("value");
-        var attr = $("#packsack td[bgcolor='#696969']");
-        var attrIds = [];
-        for (var i = 0;i<attr.length;i++){
-            attrIds[i]=attr[i].id;
-        }
-        var attrId = JSON.stringify(attrIds);
-        $.post("/userPropUse",{userId:userId,attrId:attrId},function (ResultEntity) {
-            if (ResultEntity.result == "SUCCESS"){
-                if (ResultEntity.message!=null){
-                    $("#fighting").append(ResultEntity.message)
-                    getPacksack();
-                }
-            }else {
-                layer.msg(ResultEntity.message, {time:1500, icon:5, shift:6});
-            }
-        })
+        roleNameBox()
     }
 
-    /*丢弃道具*/
+    /*出售道具*/
     function porpDiscarded() {
-        var userId = $("#memberId").attr("value");
         var attr = $("#packsack td[bgcolor='#696969']");
         var attrIds = [];
         for (var i = 0;i<attr.length;i++){
             attrIds[i]=attr[i].id;
         }
         var attrId = JSON.stringify(attrIds);
-        $.post("/userPropDiscarded",{roleId:roleId,attrId:attrId},function (ResultEntity) {
+        $.post("/userPropDiscarded",{attrId:attrId},function (ResultEntity) {
             if (ResultEntity.result == "SUCCESS"){
                 alert(ResultEntity.data);
                 getPacksack();
@@ -221,6 +346,54 @@
                 layer.msg(ResultEntity.message, {time:1500, icon:5, shift:6});
             }
         })
+    }
+
+    /*展示角色*/
+    function roleNameBox() {
+        var popBox = document.getElementById("roleNameBox");
+        var popLayer = document.getElementById("popLayer");
+        popBox.style.display = "block";
+        popLayer.style.display = "block";
+    };
+
+    /*使用改名卡*/
+    function determineRole(roleId) {
+        var popBox = document.getElementById("roleNameLayer");
+        var popLayer = document.getElementById("createRoleNameBox");
+        popBox.style.display = "block";
+        popLayer.style.display = "block";
+    };
+    
+    function rename() {
+        var roleName = $("#roleName").val();
+        if (roleName==null&&roleName.trim()==""){
+            layer.msg("请输入角色姓名", {time:1500, icon:5, shift:6});
+        }else {
+            $.post("/rename",{roleName:roleName},function (ResultEntity) {
+                if (ResultEntity.result == "SUCCESS"){
+                    layer.msg("使用成功", {time:1500, icon:6, shift:5});
+                    closeRoleNameBox();
+                    getPacksack();
+                }
+            })
+        }
+
+    }
+
+    /*点击关闭按钮*/
+    function closeBox() {
+        var popBox = document.getElementById("roleNameBox");
+        var popLayer = document.getElementById("popLayer");
+        popBox.style.display = "none";
+        popLayer.style.display = "none";
+    }
+
+    /*点击关闭按钮*/
+    function closeRoleNameBox() {
+        var popBox = document.getElementById("roleNameLayer");
+        var popLayer = document.getElementById("createRoleNameBox");
+        popBox.style.display = "none";
+        popLayer.style.display = "none";
     }
 
 </script>

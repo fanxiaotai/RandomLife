@@ -7,5 +7,4 @@ package com.fyt.rlife.rlife.service.gameService;
  */
 public interface SkillService {
 
-
 }

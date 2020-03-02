@@ -70,7 +70,16 @@ public class SkillUse {
                 if (!magicSkillConsume(role,10)){
                     return "魔法不足";
                 }
-                if (!fightBeforeStateMapPut(role,"强击",3)){
+                if (!fightBeforeStateMapPut(role,"强击LV1",3)){
+                    return "使用失败";
+                };
+            }
+        }else if (skillId.startsWith("5")){
+            if ("501".equals(skillId)){
+                if (!magicSkillConsume(role,5)){
+                    return "魔法不足";
+                }
+                if (!fightBeforeStateMapPut(role,"火球术LV1",1)){
                     return "使用失败";
                 };
             }
@@ -184,7 +193,7 @@ public class SkillUse {
      * 添加被动技能
      */
     public static boolean passiveSkillUse(Role role, Skill skill){
-        Integer id = skill.getId();
+        int id = Integer.parseInt(skill.getId());
         if (id<1000){
             if (id == 201){
                 return fightAfterStateMapPut(role,"痊愈",-10);

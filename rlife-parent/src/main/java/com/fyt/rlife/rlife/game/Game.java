@@ -228,14 +228,14 @@ public class Game {
                 List<Monster> monsterListNew = new ArrayList<>();
                 if(distanceXY(monsterKey,roleXY)<=1){
                     //战斗前状态
-                    GameState.fightBeforeStateMap(fighting,role);
+                    GameState.fightBeforeStateMap(fighting,role,monster1);
                     //进入战斗
                     StringBuilder stringBuilder = combatInformation(fighting, monster1, role);
                     if (stringBuilder.toString().startsWith("角色死亡，游戏结束")){
                         return null;
                     }
                     //战斗结束后状态
-                    GameState.fightAfterStateMap(fighting, role);
+                    GameState.fightAfterStateMap(fighting, role,monster1);
                     continue;
                 }else if (distanceXY(monsterKey,roleXY)<=3){
                     keyNew= moveTarget(monsterKey, roleXY); //对人物进行接近

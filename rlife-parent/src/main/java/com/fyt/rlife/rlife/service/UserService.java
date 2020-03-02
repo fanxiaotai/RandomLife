@@ -19,4 +19,6 @@ public interface UserService {
     ResultEntity<User> loginPhone(String phone, String randomPhone);
 
     User getUserByUserId(String memberId);
+
+    void updateUserIntegral(User user);
 }

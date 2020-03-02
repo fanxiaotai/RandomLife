@@ -16,6 +16,7 @@ import com.fyt.rlife.rlife.util.ResultEntity;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 import redis.clients.jedis.Jedis;
@@ -33,6 +34,7 @@ import java.util.Map;
  * @Version 1.0
  */
 @Controller
+@Transactional(rollbackFor = Exception.class)
 public class GameController {
 
     @Autowired
@@ -100,10 +102,6 @@ public class GameController {
                 }
             }
 
-            HashMap<String, Integer> aaa = new HashMap<>();
-            aaa.put("愈合",-10);
-            role.setMoveStateMap(aaa);
-
             int rounds = role.getRound();
             //怪物繁衍和进化
             if (rounds!=0&&rounds%30==0){
@@ -117,7 +115,7 @@ public class GameController {
             if (mapMonster==null){ //战斗判定
                 jedis.del("game1GameMapLists" + roleId);
                 jedis.del("role" + roleId);
-                roleService.updateSurviveByRoleId(role);
+                roleService.updateSurviveByRoleId(role,1);
                 return ResultEntity.failed("角色死亡，游戏结束");
             }
             //根据字符串坐标进行地图映射
@@ -126,7 +124,7 @@ public class GameController {
             //在新位置上添加角色
             game1GameMapLists[i][j].getData().setRole(role);
 
-            GameState.moveStateMap(fighting,role);
+            GameState.moveStateMap(fighting,role,null);
 
             //保存到redis中
             String s = JSON.toJSONString(game1GameMapLists);
@@ -194,6 +192,11 @@ public class GameController {
         GameCommon.roleUpdate(game1GameMapLists,role);
         session.setAttribute("game1GameMapLists" + roleId,game1GameMapLists);
         session.setAttribute("role" + roleId,role);
+
+        Role role1 = new Role();
+        role1.setId(role.getId());
+        role1.setRoleLeave(role.getRoleLeave());
+        roleService.updateRoleByKey(role1);
         return ResultEntity.successWithData(role);
     }
 
@@ -224,6 +227,17 @@ public class GameController {
         GameCommon.roleUpdate(game1GameMapLists,role);
         session.setAttribute("game1GameMapLists" + roleId,game1GameMapLists);
         session.setAttribute("role" + roleId,role);
+
+        Role role1 = new Role();
+        role1.setId(role.getId());
+        role1.setPhysical(role.getPhysical());
+        role1.setBasePhysical(role.getPhysical());
+        role1.setBaseLife(role.getBaseLife());
+        role1.setLife(role.getBaseLife());
+        role1.setBaseDefense(role.getBaseDefense());
+        role1.setDefense(role.getBaseDefense());
+        roleService.updateRoleByKey(role1);
+
         return ResultEntity.successWithData(role);
     }
 
@@ -254,6 +268,15 @@ public class GameController {
         GameCommon.roleUpdate(game1GameMapLists,role);
         session.setAttribute("game1GameMapLists" + roleId,game1GameMapLists);
         session.setAttribute("role" + roleId,role);
+
+        Role role1 = new Role();
+        role1.setId(role.getId());
+        role1.setPower(role.getPower());
+        role1.setBasePower(role.getPower());
+        role1.setBaseAttack(role.getBaseAttack());
+        role1.setAttack(role.getBaseAttack());
+        roleService.updateRoleByKey(role1);
+
         return ResultEntity.successWithData(role);
     }
 
@@ -284,6 +307,17 @@ public class GameController {
         GameCommon.roleUpdate(game1GameMapLists,role);
         session.setAttribute("game1GameMapLists" + roleId,game1GameMapLists);
         session.setAttribute("role" + roleId,role);
+
+        Role role1 = new Role();
+        role1.setId(role.getId());
+        role1.setAgility(role.getAgility());
+        role1.setBaseAgility(role.getAgility());
+        role1.setBaseAttack(role.getBaseAttack());
+        role1.setAttack(role.getBaseAttack());
+        role1.setBaseAttackSpeed(role.getBaseAttackSpeed());
+        role1.setAttackSpeed(role.getBaseAttackSpeed());
+        roleService.updateRoleByKey(role1);
+
         return ResultEntity.successWithData(role);
     }
 
@@ -314,6 +348,17 @@ public class GameController {
         GameCommon.roleUpdate(game1GameMapLists,role);
         session.setAttribute("game1GameMapLists" + roleId,game1GameMapLists);
         session.setAttribute("role" + roleId,role);
+
+        Role role1 = new Role();
+        role1.setId(role.getId());
+        role1.setMind(role.getBaseMind());
+        role1.setBaseMind(role.getBaseMind());
+        role1.setBaseMagic(role.getBaseMagic());
+        role1.setMagic(role.getBaseMagic());
+        role1.setBaseDef(role.getBaseDef());
+        role1.setDef(role.getBaseDef());
+        roleService.updateRoleByKey(role1);
+
         return ResultEntity.successWithData(role);
     }
 

@@ -26,4 +26,6 @@ public class GameProp {
     private String propDescribe; //道具描述
     @Column
     private Integer theNumber; //道具数量
+    @Column
+    private Integer propPrice; //道具价格
 }

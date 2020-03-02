@@ -1,9 +1,11 @@
 package com.fyt.rlife.rlife.controller;
 
-import com.fyt.rlife.rlife.annotation.RoleRequire;
 import com.fyt.rlife.rlife.bean.Word;
 import com.fyt.rlife.rlife.mapper.WordMapper;
+import com.fyt.rlife.rlife.util.CookieUtil;
+import com.fyt.rlife.rlife.util.JwtUtil;
 import com.github.pagehelper.PageHelper;
+import io.jsonwebtoken.Claims;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
@@ -25,11 +27,8 @@ public class IndexController {
     @Autowired
     WordMapper wordMapper;
 
-    @RoleRequire(roles = 1)
     @RequestMapping("/index")
     public String index(ModelMap modelMap, HttpSession session, HttpServletRequest request){
-        String memberId = (String) request.getAttribute("memberId");
-        String nickname = (String) request.getAttribute("nickname");
 
         PageHelper.startPage(0,3);
         Example example = new Example(Word.class);
@@ -37,6 +36,20 @@ public class IndexController {
         List<Word> words = wordMapper.selectByExample(example);
         modelMap.put("words",words);
 
+        String oldToken = CookieUtil.getCookieValue(request,"oldToken",true);
+        String nickname = null;
+        String memberId = null;
+        JwtUtil jwtUtil = new JwtUtil();
+        Claims claims = null;
+        try {
+            claims = jwtUtil.parseJWT(oldToken);
+        } catch (Exception e) {
+            modelMap.put("nickname",nickname);
+            modelMap.put("memberId",memberId);
+            return "index";
+        }
+        memberId = claims.getId();
+        nickname = claims.getSubject();
         modelMap.put("nickname",nickname);
         modelMap.put("memberId",memberId);
 

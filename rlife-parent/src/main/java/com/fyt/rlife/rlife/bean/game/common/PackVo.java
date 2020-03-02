@@ -16,7 +16,7 @@ import java.util.List;
 @NoArgsConstructor
 public class PackVo {
 
-    private Integer id;
+    private String id;
     private Integer roleId; //背包对应的角色的Id
     private List<List<GameProp>> propLists;
     private boolean UserPacksack;

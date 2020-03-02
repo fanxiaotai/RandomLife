@@ -258,4 +258,67 @@ public class RoleAttribute {
             fighting.append("点魔法&#10;");
         }
     }
+
+    /**
+     * 根据四围属性和角色名创建新角色
+     */
+    public static void newRole(Role role,Integer physical,Integer power,Integer agility,Integer mind,String roleName,String userId){
+        role.setNickname(roleName);
+        role.setRoleLeave(1);
+        role.setExp(0);
+        role.setBaseAttack(power+agility/3);
+        role.setAttack(power+agility/3);
+        role.setBaseDefense(physical/5);
+        role.setDefense(physical/5);
+        role.setBaseAttackSpeed(agility*0.05);
+        role.setAttackSpeed(agility*0.05);
+        role.setBaseMoveSpeed(1);
+        role.setMoveSpeed(1);
+        role.setBaseLife(physical*10);
+        role.setLife(physical*10);
+        role.setBasePhysical(physical);
+        role.setBasePhysical(physical);
+        role.setBasePower(power);
+        role.setBaseAgility(agility);
+        role.setBaseMind(mind);
+        role.setBaseDef(mind/5);
+        role.setDef(mind/5);
+        role.setBaseMagic(mind*10);
+        role.setMagic(mind*10);
+        role.setAmplification(0);
+        role.setAttackAmplification(0);
+        role.setDefenseAmplification(0);
+        role.setAttackSpeedAmplification(0);
+        role.setMoveSpeedAmplification(0);
+        role.setLifeAmplification(0);
+        role.setDefAmplification(0);
+        role.setMagicAmplification(0);
+        role.setDefaultRole(0);
+        role.setSurvive(0);
+        role.setTenacity(0);
+        role.setUserId(userId);
+    }
+
+    /**
+     * 对角色进行升级
+     */
+    public static void roleLeaveUp(Role role){
+        role.setRoleLeave(role.getRoleLeave()+1);
+        role.setFreelyDistributable(role.getFreelyDistributable()+4);
+    }
+
+    /**
+     * 对角色进行转生
+     */
+    public static void roleReincarnation(Role role){
+        role.setRoleLeave(1);
+        Integer physical = role.getPhysical() - role.getPhysical()/2;
+        Integer power = role.getPower() - role.getPower()/2;
+        Integer agility = role.getAgility() - role.getAgility()/2;
+        Integer mind = role.getMind() - role.getMind()/2;
+        basePhysicalRange(role,-physical);
+        basePowerRange(role,-power);
+        baseAgilityRange(role,-agility);
+        baseMindRange(role,-mind);
+    }
 }

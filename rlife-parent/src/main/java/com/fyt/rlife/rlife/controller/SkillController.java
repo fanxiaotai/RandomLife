@@ -8,6 +8,7 @@ import com.fyt.rlife.rlife.bean.vo.GameMap;
 import com.fyt.rlife.rlife.game.skill.SkillUse;
 import com.fyt.rlife.rlife.service.gameService.SkillService;
 import com.fyt.rlife.rlife.util.ResultEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
@@ -24,6 +25,7 @@ import java.util.Set;
  * @Version 1.0
  */
 @RestController
+@Transactional(rollbackFor = Exception.class)
 public class SkillController {
 
     @Resource
@@ -36,12 +38,12 @@ public class SkillController {
         GameMap<Game1>[][] game1GameMapLists = (GameMap<Game1>[][])session.getAttribute("game1GameMapLists" + roleId);
 
         List<Skill> skillList = role.getSkillList();
-        Set<Integer> skillIdSet = new HashSet<>();
+        Set<String> skillIdSet = new HashSet<>();
         for (Skill skill : skillList) {
             skillIdSet.add(skill.getId());
         }
 
-        if(!skillIdSet.contains(new Integer(skillId))){
+        if(!skillIdSet.contains(skillId)){
             return ResultEntity.failed("无该技能，使用失败");
         }
 

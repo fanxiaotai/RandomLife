@@ -14,7 +14,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class Skill {
 
-    private Integer id; //技能id
+    private String id; //技能id
     private String skillName; //技能名称
     private String skillDescribe; //技能描述
     private String skillLeave; //技能等级

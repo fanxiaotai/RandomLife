@@ -20,11 +20,11 @@ import java.util.List;
 public class Packsack {
 
     @Id
-    private Integer id;
+    private String id;
     @Column
     private Integer roleId; //背包对应的角色的Id
     @Transient
     private List<GameProp> propLists;
     @Transient
-    private boolean UserPacksack;
+    private boolean UserPacksack; //是否为用户背包
 }

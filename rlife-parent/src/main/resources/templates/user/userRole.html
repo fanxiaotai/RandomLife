@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <link rel="stylesheet" href="bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="css/font-awesome.min.css">
+    <link rel="stylesheet" href="css/theme.css">
+    <title>角色中心</title>
+    <style>
+        /*背景层*/
+        #popLayer {
+            display: none;
+            background-color: #B3B3B3;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+            z-index: 1001;
+            width: 100%;
+            height: 100%;
+            position:fixed;
+            -moz-opacity: 0.8;
+            opacity:.80;
+            filter: alpha(opacity=80);/* 只支持IE6、7、8、9 */
+        }
+
+        /*弹出层*/
+        #roleNewBox {
+            display: none;
+            background-color: #FFFFFF;
+            z-index: 1002;
+            width: 80%;
+            height: 80%;
+            position:fixed;
+            top:0;
+            right:0;
+            left:0;
+            bottom:0;
+            margin:auto;
+        }
+
+        /*关闭按钮*/
+        #roleNewBox .close a {
+            text-decoration: none;
+            color: #2D2C3B;
+        }
+
+        #roleNewBox .content{
+            text-align: right;
+            margin-right: 5px;
+            background-color: #F8F8F8;
+        }
+
+        /*背景层*/
+        #roleNameLayer {
+            display: none;
+            background-color: #B3B3B3;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+            z-index: 1003;
+            width: 100%;
+            height: 100%;
+            position:fixed;
+            -moz-opacity: 0.8;
+            opacity:.80;
+            filter: alpha(opacity=80);/* 只支持IE6、7、8、9 */
+        }
+
+        /*弹出层*/
+        #roleNameBox {
+            display: none;
+            background-color: #FFFFFF;
+            z-index: 1004;
+            width: 80%;
+            height: 80%;
+            position:fixed;
+            top:0;
+            right:0;
+            left:0;
+            bottom:0;
+            margin:auto;
+        }
+
+        /*关闭按钮*/
+        #roleNameBox .close a {
+            text-decoration: none;
+            color: #2D2C3B;
+        }
+
+        #roleNameBox .content{
+            text-align: right;
+            margin-right: 5px;
+            background-color: #F8F8F8;
+        }
+    </style>
+</head>
+<body>
+<div id="popLayer"></div>
+<div id="roleNewBox">
+    <div class="close">
+        <a href="javascript:void(0)" onclick="closeBox()">关闭</a>
+    </div>
+    <br>
+    <div align="center">
+        <div id="roleNew">
+            <p>新角色：</p>
+            体质：<p></p>
+            力量：<p></p>
+            敏捷：<p></p>
+            精神：<p></p>
+            可自由分配属性点：<p></p>
+        </div>
+
+        <button class="btn btn-primary" onclick="roleNewBoxNew()">重新随机</button>
+        <button class="btn btn-primary" onclick="determineRole()">确定</button>
+    </div>
+</div>
+
+<div id="roleNameLayer"></div>
+<div id="roleNameBox">
+    <div class="close">
+        <a href="javascript:void(0)" onclick="closeRoleNameBox()">关闭</a>
+    </div>
+    <br>
+    <div align="center">
+        <input id="roleName" type="text" placeholder="请输入角色姓名"/>
+        <button class="btn btn-primary" onclick="createRole()">确定</button>
+
+    </div>
+</div>
+
+<div class="navbar-wrapper">
+    <div class="container">
+        <nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+            <div class="container-fluid">
+                <div class="navbar-header">
+                    <div><a class="navbar-brand" style="font-size:32px;" href="/index">轮回世界</a></div>
+                </div>
+                <div id="navbar" class="navbar-collapse collapse">
+                    <ul class="nav navbar-nav navbar-right">
+                        <li style="padding-top:8px;">
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-default btn-success dropdown-toggle" data-toggle="dropdown">
+                                    <p style="display: none" id="memberId" th:value="${memberId}"></p>
+                                    <i class="glyphicon glyphicon-user" th:utext="${nickname}"></i><span class="caret"></span>
+                                </button>
+                                <ul class="dropdown-menu" role="menu">
+                                    <li><a href="/toUser"><i class="glyphicon glyphicon-cog"></i> 个人中心</a></li>
+                                    <li><a href="#"><i class="glyphicon glyphicon-comment"></i> 消息</a></li>
+                                    <li class="divider"></li>
+                                    <li><a href="/delLogin"><i class="glyphicon glyphicon-off"></i> 退出系统</a></li>
+                                </ul>
+                            </div>
+                        </li>
+                        <li style="margin-left:10px;padding-top:8px;">
+                            <button type="button" class="btn btn-default btn-danger">
+                                <span class="glyphicon glyphicon-question-sign"></span> 帮助
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+
+    </div>
+</div>
+<div class="container">
+    <div class="row clearfix">
+        <div class="col-sm-3 col-md-3 column">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="thumbnail" style="    border-radius: 0px;">
+                        <img src="img/services-box1.jpg" class="img-thumbnail" alt="">
+                        <div class="caption" style="text-align:center;">
+                            <h3 th:utext="${nickname}">
+                                ZhangSan
+                            </h3>
+                            <span class="label label-danger" onclick="window.location.href='#'">补全个人信息</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="list-group">
+                <div class="list-group-item " onclick="window.location.href='toUser'">
+                    资产总览<span class="badge"><i class="glyphicon glyphicon-chevron-right"></i></span>
+                </div>
+                <div class="list-group-item active" style="cursor:pointer;">
+                    我的角色<span class="badge"><i class="glyphicon glyphicon-chevron-right"></i></span>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-9 col-md-9 column">
+            <blockquote style="border-left: 5px solid #f60;color:#f60;padding: 0 0 0 20px;">
+                <b>
+                    我的角色
+                </b>
+            </blockquote>
+            <div id="boxDiv">
+                <div class="content" align="center">
+                    <table class="table table-bordered" id="packsack">
+                        <thead>
+                            <tr>
+                                <td>
+                                    角色姓名
+                                </td>
+                                <td>
+                                    等级
+                                </td>
+                                <td>
+                                    体质
+                                </td>
+                                <td>
+                                    力量
+                                </td>
+                                <td>
+                                    敏捷
+                                </td>
+                                <td>
+                                    精神
+                                </td>
+                                <td>
+                                    存活状态
+                                </td>
+                                <td>
+                                    是否为默认角色
+                                </td>
+                                <td>
+                                    设为默认角色
+                                </td>
+                                <td>
+                                    删除角色
+                                </td>
+                            </tr>
+                        </thead>
+                        <tbody id="roleTableTbody">
+
+                        </tbody>
+                        <tfoot>
+                            <tr >
+                                <td colspan="9" align="center">
+                                    <div id="Pagination" class="pagination"><!-- 这里显示分页 --></div>
+                                </td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+                <div>
+                    <button class="btn btn-primary" onclick="roleNewBox()">创建新角色</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<p th:id="totalsize" style="display: none" th:value="${totalsize}"></p>
+<p th:id="pageSize" style="display: none" th:value="${pageSize}"></p>
+<p th:id="pageNum" style="display: none" th:value="${pageNum}"></p>
+<script src="jquery/jquery-2.1.1.min.js"></script>
+<script src="bootstrap/js/bootstrap.min.js"></script>
+<script src="script/docs.min.js"></script>
+<script src="script/back-to-top.js"></script>
+<script src="script/echarts.js"></script>
+<script type="text/javascript" src="jquery/layer/layer.js"></script>
+<script type="text/javascript">
+    $(document).ready(function() {
+        getUserRole();
+    })
+
+    function getUserRole() {
+        var pageNum = $("#pageNum").attr("value");
+        var pageSize = $("#pageSize").attr("value");
+        $.post("/getUserRole",{pageNum:pageNum,pageSize:pageSize},function (ResultEntity) {
+            if (ResultEntity.result == "SUCCESS"){
+                var data = ResultEntity.data;
+                var totalsize = ResultEntity.message;
+                $("#totalsize").attr("value",totalsize);
+                if (totalsize>=2){
+                    var content = "";
+                    content += "<div class=\"btn-toolbar\" role=\"toolbar\" aria-label=\"First group\">\n"
+                    content += "  <div class=\"btn-group\" role=\"group\" aria-label=\"First group\">"
+                    var a = 1;
+                    while (totalsize>0){
+                        if (pageNum==a){
+                            content += "<button type=\"button\" class=\"btn btn-default\" onclick='pageToUserRole("+a+")' disabled =\"disabled\">"+a+"</button>"
+                        }else {
+                            content += "<button type=\"button\" class=\"btn btn-default\" onclick='pageToUserRole("+a+")'>"+a+"</button>"
+                        }
+                        totalsize--;
+                        a++;
+                    }
+                    content += "</div>";
+                    content += "</div>";
+                    $("#Pagination").html(content);
+                }
+
+                content = '';
+                $.each(data,function (i,n) {
+                    content += "<tr>"
+
+                    content += "<td>"+n.nickname +"</td>"
+                    content += "<td>"+n.roleLeave +"</td>"
+                    content += "<td>"+n.physical +"</td>"
+                    content += "<td>"+n.power +"</td>"
+                    content += "<td>"+n.agility +"</td>"
+                    content += "<td>"+n.mind +"</td>"
+                    if (n.survive==0){
+                        content += "<td>"+"存活" +"</td>"
+                    }else {
+                        content += "<td>"+"已死亡" +"</td>"
+                    }
+                    if (n.defaultRole==1){
+                        content += "<td>"+"是" +"</td>"
+                    }else {
+                        content += "<td>"+"否" +"</td>"
+                    }
+                    if (n.defaultRole==0){
+                        content += "<td>";
+                        content += "<button id='"+n.id+"' onclick=\"updateDefaultRole("+n.id+")\">设为默认角色</button>"
+                        content += "</td>"
+                    }else {
+                        content += "<td>";
+                        content += "</td>"
+                    }
+                    content += "<td><button id='"+n.id+"' onclick=\"delRole("+n.id+")\">删除</button></td>"
+
+                    content += "</tr>"
+                })
+
+                $("#roleTableTbody").html(content);
+            }
+        })
+    }
+
+    /*变更默认角色*/
+    function updateDefaultRole(defaultRoleId) {
+        sleep(1000);
+        $.post("/updateDefaultRole",{defaultRoleId:defaultRoleId,pageNum:pageNum},function (ResultEntity) {
+            if (ResultEntity.result == "SUCCESS"){
+
+                var data = ResultEntity.data;
+
+                var content = '';
+                $.each(data,function (i,n) {
+                    content += "<tr>"
+
+                    content += "<td>"+n.nickname +"</td>"
+                    content += "<td>"+n.roleLeave +"</td>"
+                    content += "<td>"+n.physical +"</td>"
+                    content += "<td>"+n.power +"</td>"
+                    content += "<td>"+n.agility +"</td>"
+                    content += "<td>"+n.mind +"</td>"
+                    if (n.survive==0){
+                        content += "<td>"+"存活" +"</td>"
+                    }else {
+                        content += "<td>"+"已死亡" +"</td>"
+                    }
+                    if (n.defaultRole==1){
+                        content += "<td>"+"是" +"</td>"
+                    }else {
+                        content += "<td>"+"否" +"</td>"
+                    }
+                    if (n.defaultRole==0){
+                        content += "<td>";
+                        content += "<button id='"+n.id+"' onclick=\"updateDefaultRole("+n.id+")\">设为默认角色</button>"
+                        content += "</td>"
+                    }else {
+                        content += "<td>";
+                        content += "</td>"
+                    }
+                    content += "<td><button id='"+n.id+"' onclick=\"delRole("+n.id+")\">删除</button></td>"
+
+                    content += "</tr>"
+                })
+
+                $("#roleTableTbody").html(content);
+            }
+        })
+    }
+
+    function pageToUserRole(pageNum) {
+        window.location.href = "toUserRole?pageNum="+pageNum+"&pageSize=5";
+    }
+
+    /*睡眠*/
+    function sleep(numberMillis) {
+        var now = new Date();
+        var exitTime = now.getTime() + numberMillis;
+        while (true) {
+            now = new Date();
+            if (now.getTime() > exitTime)
+                return;
+        }
+    }
+
+    /*新建角色*/
+    function roleNewBox() {
+        $.post("/newRole",{},function (ResultEntity) {
+            if (ResultEntity.result == "SUCCESS"){
+
+                var data = ResultEntity.data;
+
+                var content = "";
+                content += "            <p>新角色：</p>\n" +
+                    "            <p>体质："+data.physical+"</p>\n" +
+                    "            <p>力量："+data.power+"</p>\n" +
+                    "            <p>敏捷："+data.agility+"</p>\n" +
+                    "            <p>精神："+data.mind+"</p>\n" +
+                    "            <p>可自由分配属性点："+data.freelyDistributable+"</p>"
+
+                $("#roleNew").html(content);
+            }else {
+                layer.msg("系统繁忙，请稍后再试", {time:1500, icon:5, shift:6});
+            }
+        })
+
+        var popBox = document.getElementById("roleNewBox");
+        var popLayer = document.getElementById("popLayer");
+        popBox.style.display = "block";
+        popLayer.style.display = "block";
+    };
+
+    /*重新随机*/
+    function roleNewBoxNew() {
+        $.post("/newRole",{},function (ResultEntity) {
+            if (ResultEntity.result == "SUCCESS"){
+
+                var data = ResultEntity.data;
+
+                var content = "";
+                content += "            <p>新角色：</p>\n" +
+                    "            <p>体质："+data.physical+"</p>\n" +
+                    "            <p>力量："+data.power+"</p>\n" +
+                    "            <p>敏捷："+data.agility+"</p>\n" +
+                    "            <p>精神："+data.mind+"</p>\n" +
+                    "            <p>可自由分配属性点："+data.freelyDistributable+"</p>"
+
+                $("#roleNew").html(content);
+            }else {
+                layer.msg("系统繁忙，请稍后再试", {time:1500, icon:5, shift:6});
+            }
+        })
+    };
+
+    /*确定新角色*/
+    function determineRole() {
+        var popBox = document.getElementById("roleNameLayer");
+        var popLayer = document.getElementById("roleNameBox");
+        popBox.style.display = "block";
+        popLayer.style.display = "block";
+    };
+
+    /*创建新角色*/
+    function createRole() {
+        var roleName = $("#roleName").val();
+        var pageNum = $("#pageNum").attr("value");
+        if (roleName==null&&roleName.trim()==""){
+            layer.msg("请输入角色姓名", {time:1500, icon:5, shift:6});
+        }else {
+            $.post("/createRole",{roleName:roleName,pageNum:pageNum},function (ResultEntity) {
+                if (ResultEntity.result == "SUCCESS"){
+
+                    var data = ResultEntity.data;
+                    var totalsize = ResultEntity.message;
+                    $("#totalsize").attr("value",totalsize);
+                    if (totalsize>=2){
+                        var content = "";
+                        content += "<div class=\"btn-toolbar\" role=\"toolbar\" aria-label=\"First group\">\n"
+                        content += "  <div class=\"btn-group\" role=\"group\" aria-label=\"First group\">"
+                        var a = 1;
+                        while (totalsize>0){
+                            if (pageNum==a){
+                                content += "<button type=\"button\" class=\"btn btn-default\" onclick='pageToUserRole("+a+")' disabled =\"disabled\">"+a+"</button>"
+                            }else {
+                                content += "<button type=\"button\" class=\"btn btn-default\" onclick='pageToUserRole("+a+")'>"+a+"</button>"
+                            }
+                            totalsize--;
+                            a++;
+                        }
+                        content += "</div>";
+                        content += "</div>";
+                        $("#Pagination").html(content);
+                    }
+
+                    var content = '';
+                    $.each(data,function (i,n) {
+                        content += "<tr>"
+
+                        content += "<td>"+n.nickname +"</td>"
+                        content += "<td>"+n.roleLeave +"</td>"
+                        content += "<td>"+n.physical +"</td>"
+                        content += "<td>"+n.power +"</td>"
+                        content += "<td>"+n.agility +"</td>"
+                        content += "<td>"+n.mind +"</td>"
+                        if (n.survive==0){
+                            content += "<td>"+"存活" +"</td>"
+                        }else {
+                            content += "<td>"+"已死亡" +"</td>"
+                        }
+                        if (n.defaultRole==1){
+                            content += "<td>"+"是" +"</td>"
+                        }else {
+                            content += "<td>"+"否" +"</td>"
+                        }
+                        if (n.defaultRole==0){
+                            content += "<td>";
+                            content += "<button id='"+n.id+"' onclick=\"updateDefaultRole("+n.id+")\">设为默认角色</button>"
+                            content += "</td>"
+                        }else {
+                            content += "<td>";
+                            content += "</td>"
+                        }
+                        content += "<td><button id='"+n.id+"' onclick=\"delRole("+n.id+")\">删除</button></td>"
+
+                        content += "</tr>"
+                    })
+
+                    $("#roleTableTbody").html(content);
+                    closeRoleNameBox();
+                    closeBox();
+                }else {
+                    layer.msg(ResultEntity.message, {time:1500, icon:5, shift:6});
+                }
+            })
+        }
+
+    }
+
+    /*删除角色*/
+    function delRole(roleId) {
+        var pageNum = $("#pageNum").attr("value");
+        $.post("/delRole",{roleId:roleId,pageNum:pageNum},function (ResultEntity) {
+            if (ResultEntity.result == "SUCCESS"){
+                var data = ResultEntity.data;
+
+                var content = '';
+                $.each(data,function (i,n) {
+                    content += "<tr>"
+
+                    content += "<td>"+n.nickname +"</td>"
+                    content += "<td>"+n.roleLeave +"</td>"
+                    content += "<td>"+n.physical +"</td>"
+                    content += "<td>"+n.power +"</td>"
+                    content += "<td>"+n.agility +"</td>"
+                    content += "<td>"+n.mind +"</td>"
+                    if (n.survive==0){
+                        content += "<td>"+"存活" +"</td>"
+                    }else {
+                        content += "<td>"+"已死亡" +"</td>"
+                    }
+                    if (n.defaultRole==1){
+                        content += "<td>"+"是" +"</td>"
+                    }else {
+                        content += "<td>"+"否" +"</td>"
+                    }
+                    if (n.defaultRole==0){
+                        content += "<td>";
+                        content += "<button id='"+n.id+"' onclick=\"updateDefaultRole("+n.id+")\">设为默认角色</button>"
+                        content += "</td>"
+                    }else {
+                        content += "<td>";
+                        content += "</td>"
+                    }
+                    content += "<td><button id='"+n.id+"' onclick=\"delRole("+n.id+")\">删除</button></td>"
+
+                    content += "</tr>"
+                })
+
+                $("#roleTableTbody").html(content);
+            }
+        })
+    }
+
+
+    /*点击关闭按钮*/
+    function closeBox() {
+        var popBox = document.getElementById("roleNewBox");
+        var popLayer = document.getElementById("popLayer");
+        popBox.style.display = "none";
+        popLayer.style.display = "none";
+    }
+
+    /*点击关闭按钮*/
+    function closeRoleNameBox() {
+        var popBox = document.getElementById("roleNameLayer");
+        var popLayer = document.getElementById("roleNameBox");
+        popBox.style.display = "none";
+        popLayer.style.display = "none";
+    }
+
+</script>
+</body>
+</html>

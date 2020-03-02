@@ -18,6 +18,7 @@ import com.fyt.rlife.rlife.util.RedisUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.RequestMapping;
 import redis.clients.jedis.Jedis;
@@ -33,6 +34,7 @@ import java.util.List;
  * @Version 1.0
  */
 @Controller
+@Transactional(rollbackFor = Exception.class)
 public class GameMapController {
 
     @Autowired
@@ -72,14 +74,7 @@ public class GameMapController {
                     return "game/gameMap001";
                 }else {
                     //被动技能的加载
-                    List<Skill> skillList = role.getSkillList();
-                    for (Skill skill : skillList) {
-                        if (skill.getSkillInitiative().equals("0")){
-                            if (!SkillUse.passiveSkillUse(role,skill)){
-                                System.out.println("有技能加载失败");
-                            }
-                        }
-                    }
+                    PassiveSkillLoading(role);
                     List<List<GameMap<String>>> a = mapInitialize(wordId,request,role,monsterService);
                     modelMap.put("a",a);
                     role.setRound(0);
@@ -100,6 +95,12 @@ public class GameMapController {
         }
     }
 
+    /**
+     * 继续游戏
+     * @param request
+     * @param modelMap
+     * @return
+     */
     @RequestMapping("/ThenGameMap")
     @RoleRequire(roles = 1)
     public String ThenGameMap(HttpServletRequest request,ModelMap modelMap){
@@ -135,6 +136,13 @@ public class GameMapController {
         }
     }
 
+    /**
+     * 不继续，进行新游戏
+     * @param request
+     * @param modelMap
+     * @param wordId
+     * @return
+     */
     @RequestMapping("/NewGameMap")
     @RoleRequire(roles = 1)
     public String NewGameMap(HttpServletRequest request,ModelMap modelMap,String wordId){
@@ -150,6 +158,7 @@ public class GameMapController {
         PackVo packVo = new PackVo();
         packsackVO2Po(packsack,packVo);
 
+        PassiveSkillLoading(role);
         List<List<GameMap<String>>> a = mapInitialize(wordId,request,role,monsterService);
 
         modelMap.put("a",a);
@@ -195,6 +204,22 @@ public class GameMapController {
         }
         packVo.setPropLists(propListss);
         packVo.setUserPacksack(packsack.isUserPacksack());
+    }
+
+    /**
+     *  被动技能加载
+     */
+    public static void PassiveSkillLoading(Role role){
+        List<Skill> skillList = role.getSkillList();
+        if (skillList!=null){
+            for (Skill skill : skillList) {
+                if (skill.getSkillInitiative().equals("0")){
+                    if (!SkillUse.passiveSkillUse(role,skill)){
+                        System.out.println("有技能加载失败");
+                    }
+                }
+            }
+        }
     }
 
 }

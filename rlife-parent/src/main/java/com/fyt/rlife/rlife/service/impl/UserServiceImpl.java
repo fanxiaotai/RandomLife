@@ -1,5 +1,6 @@
 package com.fyt.rlife.rlife.service.impl;
 
+import com.alibaba.fastjson.JSON;
 import com.fyt.rlife.rlife.bean.User;
 import com.fyt.rlife.rlife.mapper.UserMapper;
 import com.fyt.rlife.rlife.service.UserService;
@@ -7,6 +8,7 @@ import com.fyt.rlife.rlife.util.MD5Util;
 import com.fyt.rlife.rlife.util.RedisUtil;
 import com.fyt.rlife.rlife.util.ResultEntity;
 import com.fyt.rlife.rlife.util.RlifeUtil;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import redis.clients.jedis.Jedis;
@@ -157,10 +159,54 @@ public class UserServiceImpl implements UserService {
         return ResultEntity.successWithData(user);
     }
 
+    /**
+     * 根据用户id查询用户信息
+     * @param memberId
+     * @return
+     */
     @Override
     public User getUserByUserId(String memberId) {
-        Example example = new Example(User.class);
-        example.createCriteria().andEqualTo("id",memberId);
-        return userMapper.selectOneByExample(example);
+
+        Jedis jedis = null;
+        try {
+            jedis = redisUtil.getJedis();
+            String userStr = jedis.get("user:" + memberId);
+            if(StringUtils.isNotBlank(userStr)){
+                return JSON.parseObject(userStr, User.class);
+            }else {
+                Example example = new Example(User.class);
+                example.createCriteria().andEqualTo("id",memberId);
+                User user = userMapper.selectOneByExample(example);
+                jedis.setex("user:" + memberId,15*60,JSON.toJSONString(user));
+                return user;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        } finally {
+            if (jedis != null) {
+                jedis.close();
+            }
+        }
+    }
+
+    @Override
+    public void updateUserIntegral(User user) {
+
+        Jedis jedis = null;
+        try {
+            jedis = redisUtil.getJedis();
+            User userNew = new User();
+            userNew.setIntegral(user.getIntegral());
+            userNew.setId(user.getId());
+            userMapper.updateByPrimaryKeySelective(userNew);
+            jedis.del("user:" + user.getId());
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (jedis != null) {
+                jedis.close();
+            }
+        }
     }
 }

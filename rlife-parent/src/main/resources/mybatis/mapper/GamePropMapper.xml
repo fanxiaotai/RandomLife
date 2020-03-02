@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.fyt.rlife.rlife.mapper.GamePropMapper">
+
+    <select id="selectPropsByPropIds" resultMap="GamePropMapperMap">
+        SELECT
+            game_prop.id,game_prop.prop_describe,game_prop.prop_name,game_prop.prop_price
+        FROM
+            game_prop
+        WHERE
+            game_prop.id IN
+        <foreach collection="array" item="propId" index="index"
+                 open="(" close=")" separator=",">
+            #{propId}
+        </foreach>
+
+    </select>
+
+    <resultMap id="GamePropMapperMap" type="com.fyt.rlife.rlife.bean.game.common.GameProp">
+        <id column="id" property="id"></id>
+        <result column="prop_name" property="propName"></result>
+        <result column="prop_describe" property="propDescribe"></result>
+        <result column="prop_price" property="propPrice"></result>
+    </resultMap>
+
+</mapper>

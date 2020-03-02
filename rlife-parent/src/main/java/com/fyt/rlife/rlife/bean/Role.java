@@ -57,7 +57,7 @@ public class Role {
   private Integer moveSpeedAmplification;  // '基础移速增幅',
   private Integer lifeAmplification;  // '基础生命增幅',
   private Integer defAmplification;  // '基础魔防增幅',
-  private Integer defaultRole; //是否为默认角色
+  private Integer defaultRole; //是否为默认角色，1是默认
   private Integer magic; //魔法
   private Integer baseMagic; //基础魔法
   private Integer magicAmplification;  // '基础魔法增幅',
@@ -79,5 +79,7 @@ public class Role {
   private List<Skill> skillList; //拥有的技能
   @Transient
   private int round; //目前所在游戏的回合数
+  @Transient
+  private Map<String,Integer> propLimitMap; //道具限制的map
 
 }
