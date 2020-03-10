@@ -88,13 +88,11 @@ public class AuthInterceptor extends HandlerInterceptorAdapter {
             return false;
         }
 
-        //验证提供，覆盖cookie中的token
+        //验证通过，覆盖cookie中的token
         if(StringUtils.isNotBlank(token)){
             CookieUtil.setCookie(request,response,"oldToken",token,60*60*2,true);
         }
         //拦截代码
-        System.out.println("经过拦截器");
-
         return true;
     }
 }

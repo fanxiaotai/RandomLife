@@ -1,11 +1,11 @@
 package com.fyt.rlife.rlife.bean;
 
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import javax.persistence.Id;
-import javax.persistence.Transient;
 import java.util.Date;
-import java.util.List;
 
 @Data
 @AllArgsConstructor
@@ -26,7 +26,7 @@ public class User {
     private Integer integral; //轮回积分
 
     //角色集合
-    @Transient
-    private List<Role> roles;
+    //@Transient
+    //private List<Role> roles;
     //道具集合
 }

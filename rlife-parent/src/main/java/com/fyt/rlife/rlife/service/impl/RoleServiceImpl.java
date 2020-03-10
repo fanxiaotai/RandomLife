@@ -1,8 +1,10 @@
 package com.fyt.rlife.rlife.service.impl;
 
 import com.fyt.rlife.rlife.bean.Role;
+import com.fyt.rlife.rlife.bean.game.RoleSkill;
 import com.fyt.rlife.rlife.bean.game.common.PropLimit;
 import com.fyt.rlife.rlife.bean.game.common.Skill;
+import com.fyt.rlife.rlife.bean.game.config.SkillConfig;
 import com.fyt.rlife.rlife.mapper.PropLimitMapper;
 import com.fyt.rlife.rlife.mapper.RoleMapper;
 import com.fyt.rlife.rlife.mapper.SkillMapper;
@@ -13,6 +15,7 @@ import tk.mybatis.mapper.entity.Example;
 import javax.annotation.Resource;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @Author: fanyitai
@@ -41,7 +44,7 @@ public class RoleServiceImpl implements RoleService {
     @Override
     public List<Role> getRoleListByUserId(String userId){
         Example example = new Example(Role.class);
-        example.createCriteria().andEqualTo("userId",userId);
+        example.createCriteria().andEqualTo("memberId",userId);
         example.setOrderByClause("role_leave DESC");
 
         return roleMapper.selectByExample(example);
@@ -51,8 +54,25 @@ public class RoleServiceImpl implements RoleService {
     public Role getRoleByRoleId(String roleId) {
         Role role = roleMapper.selectByPrimaryKey(roleId);
         String id = role.getId();
-        List<Skill> skills = skillMapper.selectByRoleId(id);
-        role.setSkillList(skills);
+
+        //加载已拥有的技能
+        List<RoleSkill> roleSkills = skillMapper.selectByRoleId(id);
+        Map<String,Skill> skillMap = new HashMap<>();
+        if (roleSkills!=null&&roleSkills.size()!=0){
+            for (RoleSkill roleSkill : roleSkills) {
+                Skill skill = SkillConfig.SkillMap.getSkillById(roleSkill.getId());
+                if (skill!=null){
+                    skill.setSkillLeave(roleSkill.getSkillLeave());
+                    skill.skillConsumeAdjust();
+                }else {
+                    throw new RuntimeException("获取技能失败");
+                }
+                skillMap.put(roleSkill.getId(),skill);
+            }
+        }
+        role.setSkillMap(skillMap);
+
+        //加载道具限制
         Example examplePropLimit = new Example(PropLimit.class);
         examplePropLimit.createCriteria().andEqualTo("roleId",roleId);
         List<PropLimit> propLimits = propLimitMapper.selectByExample(examplePropLimit);
@@ -79,7 +99,7 @@ public class RoleServiceImpl implements RoleService {
     @Override
     public List<Role> updateDefaultRole(String defaultRoleId,String userId) {
         Example example = new Example(Role.class);
-        example.createCriteria().andEqualTo("userId",userId);
+        example.createCriteria().andEqualTo("memberId",userId);
         example.setOrderByClause("role_leave DESC");
         List<Role> roles = roleMapper.selectByExample(example);
         for (Role role : roles) {
@@ -104,5 +124,17 @@ public class RoleServiceImpl implements RoleService {
     @Override
     public void deleteRoleByRoleId(String roleId) {
         roleMapper.deleteByPrimaryKey(roleId);
+    }
+
+    @Override
+    public Role getDefaultRole(String memberId){
+        List<Role> roleListByUserId = getRoleListByUserId(memberId);
+        for (Role role : roleListByUserId) {
+            if (role.getDefaultRole()==1){
+                role = getRoleByRoleId(role.getId());
+                return role;
+            }
+        }
+        return null;
     }
 }

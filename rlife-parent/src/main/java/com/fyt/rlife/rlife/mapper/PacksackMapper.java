@@ -14,21 +14,21 @@ import tk.mybatis.mapper.common.Mapper;
 public interface PacksackMapper extends Mapper<Packsack> {
     Packsack selectPacksackByRoleId(String roleId);
 
-    void deleteByRoleIdOrPropId(@Param("packId") String packId, @Param("propId")String propId);
-    void deleteByUserIdOrPropId(@Param("packId") String packId, @Param("propId")String propId);
+    void deleteByRoleIdOrPropId(@Param("packId") String packId, @Param("propId") String propId);
+    void deleteByUserIdOrPropId(@Param("packId") String packId, @Param("propId") String propId);
 
-    void updateByRoleIdOrPropIdLess(@Param("packId") String packId, @Param("propId")String propId);
-    void updateByUserIdOrPropIdLess(@Param("packId") String packId, @Param("propId")String propId);
+    void updateByRoleIdOrPropIdLess(@Param("packId") String packId, @Param("propId") String propId);
+    void updateByUserIdOrPropIdLess(@Param("packId") String packId, @Param("propId") String propId);
 
-    void updateByRoleIdOrPropIdUP(@Param("packId") String packId, @Param("propId")String propId);
-    void updateByUserIdOrPropIdUP(@Param("packId") String packId, @Param("propId")String propId);
+    void updateByRoleIdOrPropIdUP(@Param("packId") String packId, @Param("propId") String propId);
+    void updateByUserIdOrPropIdUP(@Param("packId") String packId, @Param("propId") String propId);
 
-    void instProp(@Param("packId") String packId, @Param("propId")String propId);
-    void instPropUserId(@Param("packId") String packId, @Param("propId")String propId);
+    void instProp(@Param("packId") String packId, @Param("propId") String propId);
+    void instPropUserId(@Param("packId") String packId, @Param("propId") String propId);
 
     Packsack selectUserPacksackByUserId(String userId);
 
-    void updateByUserIdOrPropIdUPs(@Param("packId") String packId, @Param("propId")String propId,@Param("theNumber") int theNumber);
+    void updateByUserIdOrPropIdUPs(@Param("packId") String packId, @Param("propId") String propId, @Param("theNumber") int theNumber);
 
-    void instPropUserIds(@Param("packId") String packId, @Param("propId")String propId,@Param("theNumber") int theNumber);
+    void instPropUserIds(@Param("packId") String packId, @Param("propId") String propId, @Param("theNumber") int theNumber);
 }

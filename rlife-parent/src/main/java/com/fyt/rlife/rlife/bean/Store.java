@@ -1,5 +1,6 @@
-package com.fyt.rlife.rlife.bean.game.common;
+package com.fyt.rlife.rlife.bean;
 
+import com.fyt.rlife.rlife.bean.game.common.GameProp;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

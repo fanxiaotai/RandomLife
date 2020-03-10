@@ -20,5 +20,6 @@ public class RoleSkill {
     @Id
     private String id;
     private String roleId;
-    private String SkillId;
+    private String skillId;
+    private Integer skillLeave;
 }

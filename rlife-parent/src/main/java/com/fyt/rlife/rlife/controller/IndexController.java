@@ -39,17 +39,22 @@ public class IndexController {
         String oldToken = CookieUtil.getCookieValue(request,"oldToken",true);
         String nickname = null;
         String memberId = null;
-        JwtUtil jwtUtil = new JwtUtil();
         Claims claims = null;
-        try {
-            claims = jwtUtil.parseJWT(oldToken);
-        } catch (Exception e) {
-            modelMap.put("nickname",nickname);
-            modelMap.put("memberId",memberId);
-            return "index";
+        if (oldToken!=null){
+            JwtUtil jwtUtil = new JwtUtil();
+            try {
+                claims = jwtUtil.parseJWT(oldToken);
+            } catch (Exception e) {
+                System.out.println("返回首页时jwt解析失败");
+                modelMap.put("nickname",nickname);
+                modelMap.put("memberId",memberId);
+                return "index";
+            }
         }
-        memberId = claims.getId();
-        nickname = claims.getSubject();
+        if (claims!=null){
+            memberId = claims.getId();
+            nickname = claims.getSubject();
+        }
         modelMap.put("nickname",nickname);
         modelMap.put("memberId",memberId);
 

@@ -113,7 +113,7 @@
             <h2 th:utext="${word.wordName}">饥荒冒险</h2>
             <p class="text-danger"th:utext="'可能掉落物品：'+${word.award}">可能掉落物品：经验，角色卡牌，道具</p>
             <p th:utext="${word.wordDescribe}">永远昏沉的天空，一闪而过的黑影，饥寒的压迫，耳边的杂鸣，强壮的怪物，是敌人，还是伙伴？ 火焰，寒冰还有科技，在这样的世界中，你，能生存多久？</p>
-            <p><a class="btn btn-primary" th:href="'/toGameMap?wordId='+${word.id}" role="button">进入轮回 &raquo;</a></p>
+            <p><a class="btn btn-primary" th:href="'/toGameMap?wordId='+${word.id}+'&difficulty=1'" role="button">进入轮回 &raquo;</a></p>
         </div>
     </div>
 

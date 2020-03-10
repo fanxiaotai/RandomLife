@@ -45,6 +45,9 @@ public class UserServiceImpl implements UserService {
             user.setUsername(name);
             user.setUserpswd(ps);
             User user1 = userMapper.selectOne(user);
+
+            user1.setLastDate(new Date());
+            userMapper.updateByPrimaryKey(user1);
             return user1;
         } catch (Exception e) {
             System.out.println("查询登陆异常");
@@ -66,7 +69,7 @@ public class UserServiceImpl implements UserService {
         try {
             code = RlifeUtil.randomCode(4);
             //用阿里发短信
-            //RlifeUtil.sendShortMessage("阿里云市场中调用API时识别身份的appCode",code,phone);
+            RlifeUtil.sendShortMessage("阿里云市场中调用API时识别身份的appCode",code,phone);
             jedis = redisUtil.getJedis();
             jedis.setex("random:"+phone,15*60,code);
             return code;
@@ -88,7 +91,7 @@ public class UserServiceImpl implements UserService {
      * @return 成功信息
      */
     @Override
-    public String inster(User user,String randomPhone) {
+    public String insert(User user,String randomPhone) {
         Jedis jedis = null;
         String str = "";
 
@@ -156,6 +159,9 @@ public class UserServiceImpl implements UserService {
             }
         }
 
+        user.setLastDate(new Date());
+        userMapper.updateByPrimaryKey(user);
+
         return ResultEntity.successWithData(user);
     }
 
@@ -191,13 +197,13 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void updateUserIntegral(User user) {
+    public void updateUserIntegral(User user,Integer integral) {
 
         Jedis jedis = null;
         try {
             jedis = redisUtil.getJedis();
             User userNew = new User();
-            userNew.setIntegral(user.getIntegral());
+            userNew.setIntegral(user.getIntegral()+integral);
             userNew.setId(user.getId());
             userMapper.updateByPrimaryKeySelective(userNew);
             jedis.del("user:" + user.getId());
@@ -207,6 +213,16 @@ public class UserServiceImpl implements UserService {
             if (jedis != null) {
                 jedis.close();
             }
+        }
+    }
+
+    @Override
+    public String insertOAuth2(User user) {
+        int insert = userMapper.insert(user);
+        if (insert==1){
+            return "success";
+        }else {
+            return "fail";
         }
     }
 }

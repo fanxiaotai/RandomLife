@@ -1,6 +1,6 @@
 package com.fyt.rlife.rlife.mapper;
 
-import com.fyt.rlife.rlife.bean.game.common.Store;
+import com.fyt.rlife.rlife.bean.Store;
 import org.springframework.stereotype.Repository;
 import tk.mybatis.mapper.common.Mapper;
 

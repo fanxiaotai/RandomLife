@@ -4,8 +4,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.persistence.Id;
 import javax.persistence.Transient;
+import java.io.Serializable;
 import java.util.List;
 
 /**
@@ -17,13 +17,11 @@ import java.util.List;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class Box {
-
-    @Id
-    private Integer id;
+public class Box implements Cloneable, Serializable {
+    private String id;
     private Integer boxLeave; //宝箱等级
+    private String boxDescribe; //宝箱描述
     //道具/物品集合
-
     @Transient
     private List<GameProp> propLists;
 }

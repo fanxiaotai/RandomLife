@@ -1,7 +1,17 @@
 package com.fyt.rlife.rlife.util;
 
-import java.util.HashMap;
-import java.util.Map;
+import com.aliyuncs.DefaultAcsClient;
+import com.aliyuncs.IAcsClient;
+import com.aliyuncs.ecs.model.v20140526.DescribeInstancesRequest;
+import com.aliyuncs.ecs.model.v20140526.DescribeInstancesResponse;
+import com.aliyuncs.exceptions.ClientException;
+import com.aliyuncs.profile.DefaultProfile;
+import com.fyt.rlife.rlife.bean.Role;
+import com.fyt.rlife.rlife.bean.User;
+import com.fyt.rlife.rlife.service.RoleService;
+import com.fyt.rlife.rlife.service.UserService;
+
+import javax.servlet.http.HttpServletRequest;
 
 /**
  * @Author: fanyitai
@@ -9,6 +19,75 @@ import java.util.Map;
  * @Version 1.0
  */
 public class RlifeUtil {
+
+    /**
+     * 检查用户是否登陆以及是否拥有该id的角色
+     */
+    public static ResultEntity<String> userLoginCheckAndRole(HttpServletRequest request, String roleId,RoleService roleService) {
+        ResultEntity<String> stringResultEntity = userLoginCheck(request);
+        if (stringResultEntity.getResult().equals(ResultEntity.SUCCESS)){
+            String memberId = stringResultEntity.getData();
+            Role roleByRoleId = roleService.getRoleByRoleId(roleId);
+            if (roleByRoleId!=null){
+                if (roleByRoleId.getMemberId().equals(memberId)){
+                    return stringResultEntity;
+                }
+                return ResultEntity.failed("该角色不属于id为"+memberId+"的用户");
+            }
+            return ResultEntity.failed("该角色不存在");
+        }
+        return stringResultEntity;
+    }
+
+    /**
+     * 用户登陆检测并获取用户id
+     */
+    public static ResultEntity<String> userLoginCheck(HttpServletRequest request){
+        //用户登陆检测
+        String memberId = (String)request.getAttribute("memberId");
+        if (memberId!=null){
+            return ResultEntity.successWithData(memberId);
+        }
+        return ResultEntity.failed("用户未登陆");
+    }
+
+    /**
+     * 用户登陆检测并获取用户信息
+     */
+    public static ResultEntity<User> userLoginCheckGetUserInfo(HttpServletRequest request, UserService userService){
+        //用户登陆检测
+        ResultEntity<String> stringResultEntity = userLoginCheck(request);
+        if (stringResultEntity.getResult().equals(ResultEntity.SUCCESS)){
+            String memberId = (String)request.getAttribute("memberId");
+            User user = userService.getUserByUserId(memberId);
+            if (user!=null){
+                return ResultEntity.successWithData(user);
+            }else {
+                return ResultEntity.failed("未能获取到用户信息");
+            }
+        }else {
+            return ResultEntity.failed(stringResultEntity.getMessage());
+        }
+    }
+
+    /**
+     * 用户登陆检测并获取用户默认角色信息(技能获取)
+     */
+    public static ResultEntity<Role> userLoginCheckGetDefaultRole(HttpServletRequest request, RoleService roleService){
+        //用户登陆检测
+        ResultEntity<String> stringResultEntity = userLoginCheck(request);
+        if (stringResultEntity.getResult().equals(ResultEntity.SUCCESS)){
+            String memberId = (String)request.getAttribute("memberId");
+            Role role = roleService.getDefaultRole(memberId);
+            if (role!=null){
+                return ResultEntity.successWithData(role);
+            }else {
+                return ResultEntity.failed("未能获取到角色信息");
+            }
+        }else {
+            return ResultEntity.failed(stringResultEntity.getMessage());
+        }
+    }
 
     /**
      * 生成随机验证码
@@ -21,7 +100,7 @@ public class RlifeUtil {
     public static String randomCode(int length) {
 
         if (length <= 0) {
-            throw new RuntimeException(RlifeConstant.NUMBER_ILLEGAL);
+            throw new RuntimeException("验证码数字不匹配");
         }
 
         StringBuilder builder = new StringBuilder();
@@ -49,7 +128,26 @@ public class RlifeUtil {
      * @param phoneNum   接收验证码短信的手机号
      */
     public static void sendShortMessage(String appcode, String randomCode, String phoneNum) {
-        // 调用短信发送接口时的访问地址
+        // 创建DefaultAcsClient实例并初始化
+        DefaultProfile profile = DefaultProfile.getProfile(
+                "<cn-hangzhou>",          // 地域ID
+                "<LTAI4FnX7jfHNX7R2HEmXKCX>",      // RAM账号的AccessKey ID
+                "< VGTUe05I8rQkqMKQWdOVfjGFy5mYNW >"); // RAM账号AccessKey Secret
+        IAcsClient client = new DefaultAcsClient(profile);
+        // 创建API请求并设置参数
+        DescribeInstancesRequest request = new DescribeInstancesRequest();
+        request.setPageSize(10);
+        // 发起请求并处理应答或异常
+        DescribeInstancesResponse response;
+        try {
+            response = client.getAcsResponse(request);
+            for (DescribeInstancesResponse.Instance instance:response.getInstances()) {
+                System.out.println(instance.getPublicIpAddress());
+            }
+        } catch (ClientException e) {
+            e.printStackTrace();
+        }
+        /*// 调用短信发送接口时的访问地址
         String host = "https://feginesms.market.alicloudapi.com";
 
         // 具体访问路径
@@ -82,7 +180,7 @@ public class RlifeUtil {
 
         // JDK 1.8示例代码请在这里下载： http://code.fegine.com/Tools.zip
 
-        /*try {
+        *//*try {
             /**
              * 重要提示如下: HttpUtils请从
              * https://github.com/aliyun/api-gateway-demo-sign-java/blob/master/src/main/java/com/aliyun/api/gateway/demo/util/HttpUtils.java
@@ -103,4 +201,6 @@ public class RlifeUtil {
             throw new RuntimeException(e.getMessage());
         }*/
     }
+
+
 }

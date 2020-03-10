@@ -1,6 +1,5 @@
 package com.fyt.rlife.rlife.controller;
 
-import com.alibaba.fastjson.JSON;
 import com.fyt.rlife.rlife.annotation.RoleRequire;
 import com.fyt.rlife.rlife.bean.Role;
 import com.fyt.rlife.rlife.bean.game.Game1;
@@ -8,25 +7,30 @@ import com.fyt.rlife.rlife.bean.game.common.GameProp;
 import com.fyt.rlife.rlife.bean.game.common.PackVo;
 import com.fyt.rlife.rlife.bean.game.common.Packsack;
 import com.fyt.rlife.rlife.bean.game.common.Skill;
+import com.fyt.rlife.rlife.bean.game.config.BoxConfig;
+import com.fyt.rlife.rlife.bean.game.config.MonsterConfig;
+import com.fyt.rlife.rlife.bean.game.config.RoomConfig;
+import com.fyt.rlife.rlife.bean.game.factory.GameVO;
 import com.fyt.rlife.rlife.bean.vo.GameMap;
 import com.fyt.rlife.rlife.game.Game;
-import com.fyt.rlife.rlife.game.skill.SkillUse;
 import com.fyt.rlife.rlife.service.GameMapService;
-import com.fyt.rlife.rlife.service.gameService.MonsterService;
+import com.fyt.rlife.rlife.service.RoleService;
 import com.fyt.rlife.rlife.service.gameService.PacksackService;
+import com.fyt.rlife.rlife.util.GameUtils;
 import com.fyt.rlife.rlife.util.RedisUtil;
-import org.apache.commons.lang3.StringUtils;
+import com.fyt.rlife.rlife.util.ResultEntity;
+import com.fyt.rlife.rlife.util.RlifeUtil;
+import com.fyt.rlife.rlife.util.game.Game1Utils;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.RequestMapping;
-import redis.clients.jedis.Jedis;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 /**
  * @Author: fanyitai
@@ -40,59 +44,83 @@ public class GameMapController {
     @Autowired
     GameMapService gameMapService;
     @Autowired
-    MonsterService monsterService;
-    @Autowired
     PacksackService packsackService;
     @Autowired
     RedisUtil redisUtil;
+    @Autowired
+    MonsterConfig.MonsterGame1Map monsterGame1Map;
+    @Autowired
+    RoleService roleService;
+    @Autowired
+    BoxConfig.BoxMap boxMap;
+    @Autowired
+    RoomConfig.RoomMap roomMap;
+    @Autowired
+    MonsterConfig.SuffixClassList suffixClassList;
 
     @RequestMapping("/toGameMap")
     @RoleRequire(roles = 1)
-    public String toGameMap(HttpServletRequest request, String wordId, ModelMap modelMap, HttpServletResponse response){
-        Jedis jedis = redisUtil.getJedis();
-        try {
-            String memberId = (String) request.getAttribute("memberId");
-            if (StringUtils.isBlank(memberId)){
-                return "error";
-            }
-            String nickname = (String) request.getAttribute("nickname");
-            //获取角色信息
-            Role role = gameMapService.selectRoleByMemberId(memberId);
-            //获取背包信息
-            Packsack packsack = packsackService.getPacksackByRoleId(role.getId());
-            PackVo packVo = new PackVo();
-            packsackVO2Po(packsack,packVo);
+    public String toGameMap(HttpServletRequest request, String wordId,String difficulty, ModelMap modelMap, HttpServletResponse response){
 
-            if (role == null||role.getSurvive()==1){
-                //转发到个人中心,让他去创建自己的角色或者选择其他存活角色
-                return "error";
-            }else {
-                role.setLeaveExp(role.getRoleLeave()*role.getRoleLeave()*10);
-                String s = jedis.get("game1GameMapLists" + role.getId());
-                if(StringUtils.isNotBlank(s)){
-                    modelMap.put("wordId",wordId);
-                    return "game/gameMap001";
-                }else {
-                    //被动技能的加载
-                    PassiveSkillLoading(role);
-                    List<List<GameMap<String>>> a = mapInitialize(wordId,request,role,monsterService);
-                    modelMap.put("a",a);
-                    role.setRound(0);
-                    modelMap.put("rounds",0);
-                }
-            }
-
-            modelMap.put("role",role);
-            modelMap.put("packVo",packVo);
-            modelMap.put("nickname",nickname);
-            modelMap.put("memberId",memberId);
-            return "game/gameMap";
-        } catch (Exception e) {
-            e.printStackTrace();
+        //用户登陆检测并获取用户默认角色
+        ResultEntity<Role> roleResultEntity = RlifeUtil.userLoginCheckGetDefaultRole(request, roleService);
+        if (!roleResultEntity.getResult().equals(ResultEntity.SUCCESS)){
+            modelMap.put("errorMessage",roleResultEntity.getMessage());
+            LoggerFactory.getLogger(getClass()).error(roleResultEntity.getMessage());//打印错误日志
             return "error";
-        }finally {
-            jedis.close();
         }
+
+        //检测redis或者session中是否有存档
+        //...
+
+        Role role = roleResultEntity.getData();
+        role.setLeaveExp(role.getRoleLeave()*role.getRoleLeave()*10);
+        role.setDifficulty(Integer.parseInt(difficulty));
+        role.setFeedDegree(100);
+        role.setGamePropMap(new HashMap<>());
+        role.setMoveStateMap(new HashMap<>());
+        role.setFightBeforeStateMap(new HashMap<>());
+        role.setFightStateAttackMap(new HashMap<>());
+        role.setFightAfterStateMap(new HashMap<>());
+
+        modelMap.put("role",role);
+        //技能显示
+        Map<String, Skill> skillMap = role.getSkillMap();
+        if (skillMap!=null){
+            Collection<Skill> roleSkills = skillMap.values();
+            modelMap.put("roleSkills",roleSkills);
+        }else {
+            modelMap.put("roleSkills",null);
+        }
+
+        //生成地图
+        role.setLayerNumber(1);
+        GameMap<Game1>[][] gameMaps = mapInitialize(wordId, role, monsterGame1Map, suffixClassList,boxMap, roomMap);
+        if (gameMaps==null){
+            modelMap.put("errorMessage","地图解析错误");
+            return "error";
+        }
+        //转化为前端可视地图
+        GameMap<GameVO>[][] gameVOGameMap = GameUtils.GameMapPO2VO(gameMaps);
+        modelMap.put("gameMapSs",gameVOGameMap);
+
+        //加载背包
+        Map<String, GameProp> gamePropMap = role.getGamePropMap();
+        if (gamePropMap==null){
+            gamePropMap = new HashMap<>();
+            role.setGamePropMap(gamePropMap);
+            modelMap.put("gameProps",null);
+        }else {
+            PackVo packVo = new PackVo();
+            GameUtils.roleProp2Vo(gamePropMap,packVo);
+            //背包转换
+            modelMap.put("gameProps",packVo);
+        }
+
+        //后台应用数据保存
+        Game1Utils.saveInfo(request,role,redisUtil,gameMaps);
+
+        return "game/gameMap";
     }
 
     /**
@@ -104,36 +132,8 @@ public class GameMapController {
     @RequestMapping("/ThenGameMap")
     @RoleRequire(roles = 1)
     public String ThenGameMap(HttpServletRequest request,ModelMap modelMap){
-        Jedis jedis = redisUtil.getJedis();
-        try {
-            String memberId = (String) request.getAttribute("memberId");
-            if (StringUtils.isBlank(memberId)){
-                return "error";
-            }
-            String nickname = (String) request.getAttribute("nickname");
-            //获取角色信息
-            Role role = gameMapService.selectRoleByMemberId(memberId);
-            Packsack packsack = packsackService.getPacksackByRoleId(role.getId());
-            PackVo packVo = new PackVo();
-            packsackVO2Po(packsack,packVo);
-            role = JSON.parseObject(jedis.get("role" + role.getId()),Role.class);
-            String s = jedis.get("game1GameMapLists" + role.getId());
-            GameMap<Game1>[][] mapByRedis = Game.getMapByRedis(s);
-            List<List<GameMap<String>>> a = Game.game2gameMap(mapByRedis);
 
-            modelMap.put("a",a);
-            modelMap.put("rounds",role.getRound());
-            modelMap.put("role",role);
-            modelMap.put("packVo",packVo);
-            modelMap.put("nickname",nickname);
-            modelMap.put("memberId",memberId);
-            return "game/gameMap";
-        } catch (Exception e) {
-            e.printStackTrace();
-            return "error";
-        } finally {
-            jedis.close();
-        }
+        return "game/gameMap";
     }
 
     /**
@@ -146,70 +146,46 @@ public class GameMapController {
     @RequestMapping("/NewGameMap")
     @RoleRequire(roles = 1)
     public String NewGameMap(HttpServletRequest request,ModelMap modelMap,String wordId){
-        String memberId = (String) request.getAttribute("memberId");
-        if (StringUtils.isBlank(memberId)){
-            return "error";
-        }
-        String nickname = (String) request.getAttribute("nickname");
-        //获取角色信息
-        Role role = gameMapService.selectRoleByMemberId(memberId);
-        Packsack packsack = packsackService.getPacksackByRoleId(role.getId());
-        role.setLeaveExp(role.getRoleLeave()*role.getRoleLeave()*10);
-        PackVo packVo = new PackVo();
-        packsackVO2Po(packsack,packVo);
 
-        PassiveSkillLoading(role);
-        List<List<GameMap<String>>> a = mapInitialize(wordId,request,role,monsterService);
-
-        modelMap.put("a",a);
-        role.setRound(0);
-        modelMap.put("rounds",0);
-        modelMap.put("role",role);
-        modelMap.put("packVo",packVo);
-        modelMap.put("nickname",nickname);
-        modelMap.put("memberId",memberId);
         return "game/gameMap";
     }
 
     /**
      * 世界初始化
      */
-    public static List<List<GameMap<String>>> mapInitialize(String wordId,HttpServletRequest request,Role role,MonsterService monsterService){
+    public static GameMap<Game1>[][] mapInitialize(String wordId,Role role, MonsterConfig.MonsterGame1Map monsterGame1Map,MonsterConfig.SuffixClassList suffixClassList, BoxConfig.BoxMap boxMap, RoomConfig.RoomMap roomMap){
+
         if (wordId.equals("1")){
-            Game game = new Game();
-            return game.game1(request,role,monsterService);
+            return Game.game1(role, role.getDifficulty(), monsterGame1Map, suffixClassList, boxMap, roomMap);
         }
         return null;
     }
 
     /**
      * 背包转换
-     * @param packsack
      * @param packVo
      */
-    public static void packsackVO2Po(Packsack packsack,PackVo packVo){
-        packVo.setId(packsack.getId());
-        packVo.setRoleId(packsack.getRoleId());
+    public static void packsackVO2Po(Packsack packsack, PackVo packVo){
+
         List<GameProp> propLists = packsack.getPropLists();
         List<List<GameProp>> propListss = new ArrayList<>();
         List<GameProp> props = new ArrayList<>();
         propListss.add(props);
         for (int i = 0;i<propLists.size();i++){
             if (i!=0&&i%10==0){
-                propListss.add(props);
                 props = new ArrayList<>();
+                propListss.add(props);
             }
             GameProp gameProp = propLists.get(i);
             props.add(gameProp);
         }
         packVo.setPropLists(propListss);
-        packVo.setUserPacksack(packsack.isUserPacksack());
     }
 
     /**
      *  被动技能加载
      */
-    public static void PassiveSkillLoading(Role role){
+/*    public static void PassiveSkillLoading(Role role){
         List<Skill> skillList = role.getSkillList();
         if (skillList!=null){
             for (Skill skill : skillList) {
@@ -220,6 +196,5 @@ public class GameMapController {
                 }
             }
         }
-    }
-
+    }*/
 }

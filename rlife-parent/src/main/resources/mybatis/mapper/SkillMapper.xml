@@ -4,23 +4,15 @@
 
     <select id="selectByRoleId" resultMap="selectByRoleIdMap">
         SELECT
-            sk.id as sk_id,skill_name,skill_describe,skill_leave,skill_initiative,skill_consume
+            rsk.id as id,rsk.skill_leave as skillLeave
         FROM
-            skill sk,role_skill rsk
+            role_skill rsk
         where
-            sk.id = rsk.skill_id
-            AND
             rsk.role_id = #{roleId}
     </select>
-
-   <resultMap id="selectByRoleIdMap" type="com.fyt.rlife.rlife.bean.game.common.Skill">
-        <id column="sk_id" property="id"></id>
-        <result column="skill_name" property="skillName"></result>
-        <result column="skill_describe" property="skillDescribe"></result>
-        <result column="skill_leave" property="skillLeave"></result>
-        <result column="skill_initiative" property="skillInitiative"></result>
-        <result column="skill_consume" property="skillConsume"></result>
-
+    <resultMap id="selectByRoleIdMap" type="com.fyt.rlife.rlife.bean.game.RoleSkill">
+        <id column="id" property="id"></id>
+        <result column="skillLeave" property="skillLeave"></result>
     </resultMap>
 
 </mapper>

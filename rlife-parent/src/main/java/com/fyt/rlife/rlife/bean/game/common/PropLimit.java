@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.Id;
+import java.io.Serializable;
 
 /**
  * @Author: fanyitai
@@ -15,7 +16,7 @@ import javax.persistence.Id;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class PropLimit {
+public class PropLimit implements Serializable {
     @Id
     private String id;
     private String roleId;

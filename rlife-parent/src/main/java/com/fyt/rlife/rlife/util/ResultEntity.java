@@ -11,6 +11,7 @@ public class ResultEntity<T> {
 	
 	private String result;
 	private String message;
+	private String secondMessage;
 	private T data;
 	
 	public static final String SUCCESS = "SUCCESS";
@@ -19,15 +20,15 @@ public class ResultEntity<T> {
 	public static final String NO_DATA = "NO_DATA";
 	
 	public static ResultEntity<String> successNoData() {
-		return new ResultEntity<>(SUCCESS, NO_MSG, NO_DATA);
+		return new ResultEntity<>(SUCCESS, NO_MSG,null, NO_DATA);
 	}
 	
 	public static <T> ResultEntity<T> successWithData(T data) {
-		return new ResultEntity<>(SUCCESS, null, data);
+		return new ResultEntity<>(SUCCESS, null, null,data);
 	}
 	
 	public static <T> ResultEntity<T> failed(String message) {
-		return new ResultEntity<>(FAILED, message, null);
+		return new ResultEntity<>(FAILED, message,null, null);
 	}
 
 }

@@ -4,8 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.persistence.Column;
-import javax.persistence.Id;
+import java.io.Serializable;
 
 /**
  * 道具类
@@ -16,16 +15,16 @@ import javax.persistence.Id;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class GameProp {
+public class GameProp implements Cloneable, Serializable {
 
-    @Id
-    private Integer id;
-    @Column
+    private String id;
     private String propName; //道具名称
-    @Column
     private String propDescribe; //道具描述
-    @Column
     private Integer theNumber; //道具数量
-    @Column
     private Integer propPrice; //道具价格
+
+    @Override
+    public Object clone() throws CloneNotSupportedException {
+        return super.clone();
+    }
 }

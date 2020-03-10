@@ -57,8 +57,39 @@ public class CookieUtil {
             Cookie cookie = new Cookie(cookieName, cookieValue);
             if (cookieMaxage >= 0)
                 cookie.setMaxAge(cookieMaxage);
-            if (null != request)// 设置域名的cookie
-                cookie.setDomain(getDomainName(request));
+            if (null != request){// 设置域名的cookie
+                String serverName = request.getRequestURL().toString();
+                serverName = serverName.substring(7);
+                final int end = serverName.indexOf("/");
+                serverName = serverName.substring(0, end);
+                cookie.setDomain(serverName);
+            }
+            // 在域名的根路径下保存
+            //cookie.setPath("/");
+            response.addCookie(cookie);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /***
+     * 设置cookie的值(单一架构，一重域名)
+     * @param response
+     * @param cookieName
+     * @param cookieValue
+     * @param cookieMaxage
+     * @param isEncode
+     */
+    public static void setCookieNotMicroService(HttpServletResponse response, String cookieName, String cookieValue, int cookieMaxage, boolean isEncode) {
+        try {
+            if (cookieValue == null) {
+                cookieValue = "";
+            } else if (isEncode) {
+                cookieValue = URLEncoder.encode(cookieValue, "utf-8");
+            }
+            Cookie cookie = new Cookie(cookieName, cookieValue);
+            if (cookieMaxage >= 0)
+                cookie.setMaxAge(cookieMaxage);
             // 在域名的根路径下保存
             cookie.setPath("/");
             response.addCookie(cookie);
@@ -67,11 +98,11 @@ public class CookieUtil {
         }
     }
     /***
-     * 获得cookie的主域名，本系统为gmall.com，保存时使用
+     * 获得cookie的主域名，本系统为life.com，保存时使用
      * @param request
      * @return
      */
-    private static final String getDomainName(HttpServletRequest request) {
+/*    private static final String getDomainName(HttpServletRequest request) {
         String domainName = null;
         String serverName = request.getRequestURL().toString();
         if (serverName == null || serverName.equals("")) {
@@ -99,7 +130,8 @@ public class CookieUtil {
         }
         System.out.println("domainName = " + domainName);
         return domainName;
-    }
+    }*/
+
     /***
      * 将cookie中的内容按照key删除
      * @param request

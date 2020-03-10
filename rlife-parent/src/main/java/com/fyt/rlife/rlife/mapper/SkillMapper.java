@@ -1,5 +1,6 @@
 package com.fyt.rlife.rlife.mapper;
 
+import com.fyt.rlife.rlife.bean.game.RoleSkill;
 import com.fyt.rlife.rlife.bean.game.common.Skill;
 import org.springframework.stereotype.Repository;
 import tk.mybatis.mapper.common.Mapper;
@@ -13,5 +14,6 @@ import java.util.List;
  */
 @Repository
 public interface SkillMapper extends Mapper<Skill> {
-    List<Skill> selectByRoleId(String roleId);
+
+    List<RoleSkill> selectByRoleId(String roleId);
 }

@@ -131,7 +131,7 @@ public class UserController {
     @RoleRequire(roles = 1)
     @ResponseBody
     public ResultEntity<Role> newRole(HttpServletRequest request){
-        //随机新角色的属性，四维总和在15-25之间，不可有两个属性以上的属性大于6，不可有两个以上的属性都小于4
+        //随机新角色的属性，生命最大80，魔法最大50，攻击最多10，防御最多5
         String memberId = (String) request.getAttribute("memberId");
         Role role = new Role();
         int a = 0,b=0,c=0,d=0;
@@ -140,48 +140,19 @@ public class UserController {
         Random random = new Random();
         while (x){
             x = false;
-            count6 = 0;
-            count4 = 0;
             a = random.nextInt(8)+1;
-            b = random.nextInt(8)+1;
-            c = random.nextInt(8)+1;
-            d = random.nextInt(8)+1;
-            if (a+b+c+d<15||a+b+c+d>25){
-                x = true;
-            }
-            if (a>6){
-                count6++;
-            }
-            if (b>6){
-                count6++;
-            }
-            if (c>6){
-                count6++;
-            }
-            if (d>6){
-                count6++;
-            }
-            if (a<4){
-                count4++;
-            }
-            if (b<4){
-                count4++;
-            }
-            if (c<4){
-                count4++;
-            }
-            if (d<4){
-                count4++;
-            }
-            if (count6>2||count4>=2){
+            b = random.nextInt(5)+1;
+            c = random.nextInt(10)+1;
+            d = random.nextInt(5)+1;
+            if (a+b+c+d<20){
                 x = true;
             }
         }
-        role.setPhysical(a);
-        role.setPower(b);
-        role.setAgility(c);
-        role.setMind(d);
-        role.setFreelyDistributable(random.nextInt(4)+1);
+        role.setLifeMax(a*10);
+        role.setAttack(b);
+        role.setDefense(c);
+        role.setMagicMax(d*10);
+        role.setFreelyDistributable(0);
 
         Jedis jedis = redisUtil.getJedis();
         try {
@@ -211,13 +182,13 @@ public class UserController {
         try {
             String s = jedis.get("newRole" + memberId);
             role = JSON.parseObject(s, Role.class);
-            Integer physical = role.getPhysical();
-            Integer power = role.getPower();
-            Integer agility = role.getAgility();
-            Integer mind = role.getMind();
+            Integer lifeMax = role.getLifeMax();
+            Integer attack = role.getAttack();
+            Integer defense = role.getDefense();
+            Integer magicMax = role.getMagicMax();
 
             //给新角色添加属性
-            RoleAttribute.newRole(role,physical,power,agility,mind,roleName,memberId);
+            RoleAttribute.newRole(role,lifeMax,attack,defense,magicMax,roleName,memberId);
             //保存新角色
             roleService.insertRole(role);
         } catch (Exception e) {

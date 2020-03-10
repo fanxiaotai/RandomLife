@@ -4,17 +4,29 @@ import com.alibaba.fastjson.JSON;
 import com.fyt.rlife.rlife.annotation.RoleRequire;
 import com.fyt.rlife.rlife.bean.Monster;
 import com.fyt.rlife.rlife.bean.Role;
+import com.fyt.rlife.rlife.bean.User;
 import com.fyt.rlife.rlife.bean.game.Game1;
+import com.fyt.rlife.rlife.bean.game.common.GameProp;
+import com.fyt.rlife.rlife.bean.game.common.GameStore;
+import com.fyt.rlife.rlife.bean.game.common.Reward;
+import com.fyt.rlife.rlife.bean.game.config.BoxConfig;
+import com.fyt.rlife.rlife.bean.game.config.MonsterConfig;
+import com.fyt.rlife.rlife.bean.game.config.RoomConfig;
+import com.fyt.rlife.rlife.bean.game.factory.GameVO;
 import com.fyt.rlife.rlife.bean.vo.GameMap;
 import com.fyt.rlife.rlife.game.Game;
 import com.fyt.rlife.rlife.game.GameCommon;
+import com.fyt.rlife.rlife.game.RewardS;
 import com.fyt.rlife.rlife.game.RoleAttribute;
 import com.fyt.rlife.rlife.game.gamestate.GameState;
 import com.fyt.rlife.rlife.service.RoleService;
+import com.fyt.rlife.rlife.service.UserService;
+import com.fyt.rlife.rlife.util.GameUtils;
 import com.fyt.rlife.rlife.util.RedisUtil;
 import com.fyt.rlife.rlife.util.ResultEntity;
-import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.fyt.rlife.rlife.util.RlifeUtil;
+import com.fyt.rlife.rlife.util.game.Game1Utils;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -24,9 +36,7 @@ import redis.clients.jedis.Jedis;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @Author: fanyitai
@@ -37,11 +47,20 @@ import java.util.Map;
 @Transactional(rollbackFor = Exception.class)
 public class GameController {
 
-    @Autowired
+    @Resource
     RedisUtil redisUtil;
-
     @Resource
     RoleService roleService;
+    @Resource
+    UserService userService;
+    @Resource
+    MonsterConfig.MonsterGame1Map monsterGame1Map;
+    @Resource
+    MonsterConfig.SuffixClassList suffixClassList;
+    @Resource
+    BoxConfig.BoxMap boxMap;
+    @Resource
+    RoomConfig.RoomMap roomMap;
 
     /**
      * 游戏下一步
@@ -49,131 +68,288 @@ public class GameController {
      * @param request
      * @param attr
      * @param roleId 角色Id
-     * @param roleMoveSpeed 角色的移速
      * @return
      * @throws Exception
      */
     @RequestMapping("/next")
     @RoleRequire(roles = 1)
     @ResponseBody
-    public ResultEntity<List<List<GameMap<String>>>> next(HttpSession session,HttpServletRequest request, String attr, String roleId, String roleMoveSpeed) throws Exception {
+    public ResultEntity<GameMap<GameVO>[][]> next(HttpSession session, HttpServletRequest request, String attr, String roleId) throws Exception {
 
-        //角色标记
-        Role role = new Role();
-        //角色坐标标记
-        String roleXY = null;
-        //所有怪物的坐标标记
-        Map<String,List<Monster>> mapMonster = new HashMap<>(200);
-        Jedis jedis = redisUtil.getJedis();
-        String[] split = attr.split(",");
-        int i = Integer.parseInt(split[0]);
-        int j = Integer.parseInt(split[1]);
-
-        GameMap<Game1>[][] game1GameMapLists = (GameMap<Game1>[][])session.getAttribute("game1GameMapLists" + roleId);
-
-        if (game1GameMapLists==null){
-            String game1GameMapListsStr = jedis.get("game1GameMapLists" + roleId);
-            if(StringUtils.isNotBlank(game1GameMapListsStr)){
-                game1GameMapLists = Game.getMapByRedis(game1GameMapListsStr);
-            }
+        //检查用户是否登陆已经是否拥有该id的角色
+        ResultEntity<String> stringResultEntity = RlifeUtil.userLoginCheckAndRole(request,roleId,roleService);
+        if (!stringResultEntity.getResult().equals(ResultEntity.SUCCESS)){
+            LoggerFactory.getLogger(getClass()).error(stringResultEntity.getMessage());//打印错误日志
+            return ResultEntity.failed(stringResultEntity.getMessage());
         }
 
-        if (game1GameMapLists!=null){
-            for (int x = 0;x<game1GameMapLists.length;x++){
-                for (int y = 0;y<game1GameMapLists[x].length;y++){
-                    //找到角色所在位置
-                    if (game1GameMapLists[x][y].getData().getRole()!=null){
-                        role = game1GameMapLists[x][y].getData().getRole();
-                        roleXY = x+","+y;
-                        if (Game.move(i,j,x,y,roleMoveSpeed)){ //删除角色
-                            game1GameMapLists[x][y].getData().setRole(null);
-                        }else {
-                            //防止在计算超出距离前，先对地图的数据进行删除，所以需要先把存入集合的地址重新映射回地图
-                            Game.mapMonster(mapMonster,game1GameMapLists);
-                            return ResultEntity.failed("移动距离超出移速限制");
+        //获取地图
+        GameMap<Game1>[][] gameMaps = (GameMap<Game1>[][]) session.getAttribute("game1GameMapLists"+roleId);
+        if (gameMaps==null){
+            return ResultEntity.failed("游戏不存在");
+        }
+       Role role = (Role) session.getAttribute("role"+roleId);
+        if (role==null){
+            return ResultEntity.failed("角色遗失，请重新开始游戏");
+        }
+
+        //获得角色移动后的坐标
+        String[] split = attr.split(",");
+        int roleX = Integer.parseInt(split[0]);
+        int roleY = Integer.parseInt(split[1]);
+
+        //准备装怪物的集合
+        List<Monster> monsterList = new ArrayList<>();
+        //准备战斗信息显示的缓冲字符
+        StringBuilder stringBuilder = new StringBuilder();
+        //遍历地图取出怪物和角色
+        Random random = new Random();
+        for (GameMap<Game1>[] gameMap : gameMaps) {
+            for (GameMap<Game1> game1GameMap : gameMap) {
+                Game1 game1 = game1GameMap.getData();
+                //取出移动后的怪物，并将存活的放入集合中
+                List<Monster> monsters = game1.getMonsters();
+                if (monsters!=null&&monsters.size()!=0){
+                    Iterator<Monster> iterator = monsters.iterator();
+                    while (iterator.hasNext()){
+                        Monster monster = iterator.next();
+                        monster.move(roleX,roleY,stringBuilder,role,monsterList,random);
+                        if (Game1Utils.monsterLifeGt0(monster)){
+                            monsterList.add(monster);
                         }
-                    }
-                    //找到所有怪物位置并进行删除
-                    if (game1GameMapLists[x][y].getData().getMonsters()!=null&&game1GameMapLists[x][y].getData().getMonsters().size()!=0){
-                        String monsterStr = x + "," + y;
-                        mapMonster.put(monsterStr,game1GameMapLists[x][y].getData().getMonsters());
-                        game1GameMapLists[x][y].getData().setMonsters(null);
+                        iterator.remove();
                     }
                 }
+                //取出角色
+                if (game1.getRole()!=null){
+                    role = game1.getRole();
+                    //根据距离消耗角色饥饿度
+                    GameUtils.getFeedDegree(role,game1GameMap.getX(),game1GameMap.getY(),roleX,roleY,stringBuilder);
+                    game1.setRole(null);
+                }
             }
-
-            int rounds = role.getRound();
-            //怪物繁衍和进化
-            if (rounds!=0&&rounds%30==0){
-                Game.ReproductionAndEvolution(mapMonster);
-            }
-            role.setRound(rounds+1);
-
-            //进行怪物随机移动
-            StringBuilder fighting = new StringBuilder();
-            mapMonster = Game.randomMove(mapMonster, roleXY,role,fighting);
-            if (mapMonster==null){ //战斗判定
-                jedis.del("game1GameMapLists" + roleId);
-                jedis.del("role" + roleId);
-                roleService.updateSurviveByRoleId(role,1);
-                return ResultEntity.failed("角色死亡，游戏结束");
-            }
-            //根据字符串坐标进行地图映射
-            Game.mapMonster(mapMonster,game1GameMapLists);
-
-            //在新位置上添加角色
-            game1GameMapLists[i][j].getData().setRole(role);
-
-            GameState.moveStateMap(fighting,role,null);
-
-            //保存到redis中
-            String s = JSON.toJSONString(game1GameMapLists);
-            jedis.set("game1GameMapLists"+roleId,s);
-            String s1 = JSON.toJSONString(role);
-            jedis.set("role" + roleId,s1);
-
-            //保存到session中
-            session.setAttribute("game1GameMapLists" + roleId,game1GameMapLists);
-            session.setAttribute("role" + roleId,role);
-            session.setMaxInactiveInterval(60*60*5);
-
-            ResultEntity<List<List<GameMap<String>>>> listResultEntity = ResultEntity.successWithData(Game.game2gameMap(game1GameMapLists));
-            listResultEntity.setMessage(fighting.toString());
-            jedis.close();
-            return listResultEntity;
-        }else {
-            jedis.close();
-            return ResultEntity.failed("游戏记录不存在，请开启新游戏");
         }
+
+        //将移动后的角色和怪物放回地图中，并触发相应地图的事件
+        String info = Game1Utils.Game1NextGameMap(monsterList, role, stringBuilder, gameMaps, roleX, roleY);
+        //触发角色的移动状态
+        GameState.moveStateList(stringBuilder,role,null);
+
+        //判断角色是否存活
+        if (role.getSurvive()==1){
+            //角色已死亡,更新数据库信息
+            roleService.updateSurviveByRoleId(role,1);
+            String memberId = stringResultEntity.getData();
+            User user = userService.getUserByUserId(memberId);
+            int i = role.getLayerNumber() * (role.getLayerNumber() - 1) * role.getDifficulty(); //层数*（层数-1）*难度
+            userService.updateUserIntegral(user,i);
+            //删除游戏缓存
+            session.removeAttribute("game1GameMapLists"+roleId);
+            session.removeAttribute("role"+roleId);
+            Jedis jedis = redisUtil.getJedis();
+            jedis.del("game1GameMapLists"+roleId);
+            return ResultEntity.failed("角色已死亡");
+        }
+
+        //判断是否触发商店和下一层
+        ResultEntity<GameMap<GameVO>[][]> resultEntityInfo = ResultEntity.successWithData(GameUtils.GameMapPO2VO(gameMaps));
+        resultEntityInfo.setMessage(stringBuilder.toString());
+        if (info.equals("下一层")){
+            if (monsterList.size()==0){
+                //返回奖励
+                role.setReward(true);
+                ResultEntity<GameMap<GameVO>[][]> resultEntity = ResultEntity.successWithData(GameUtils.GameMapPO2VO(gameMaps));
+                resultEntity.setSecondMessage("allClearReward");
+                return resultEntity;
+            }else {
+                //加载下一层地图
+                role.setLayerNumber(role.getLayerNumber()+1);
+                GameMap<Game1>[][] gameMaps1 = Game.game1(role, role.getDifficulty(), monsterGame1Map, suffixClassList, boxMap, roomMap);
+                //下一层时保存地图存档
+                Game1Utils.saveInfo(request,role,redisUtil,gameMaps1);
+                ResultEntity<GameMap<GameVO>[][]> resultEntity = ResultEntity.successWithData(GameUtils.GameMapPO2VO(gameMaps1));
+                resultEntity.setMessage(stringBuilder.toString());
+                return resultEntity;
+            }
+        }else if (info.equals("商店")){
+            resultEntityInfo.setSecondMessage("store");
+            return resultEntityInfo;
+        }
+
+        return resultEntityInfo;
+    }
+
+    /**
+     * 商店购买
+     * @param session
+     * @param roleId
+     * @return
+     */
+    @RequestMapping("/storeBuy")
+    @RoleRequire(roles = 1)
+    @ResponseBody
+    public ResultEntity<Integer> storeBuy(HttpServletRequest request, HttpSession session, String roleId, String attrId){
+        if (RlifeUtil.userLoginCheckAndRole(request,roleId,roleService).getResult().equals(ResultEntity.SUCCESS)){
+            GameStore gameStore = (GameStore) session.getAttribute("gameStore" + roleId);
+            Role role = (Role)session.getAttribute("role" + roleId);
+            Integer gold = role.getGold();
+            GameProp[] gameProps = gameStore.getGameProps();
+            String[] gamePropIds = JSON.parseObject(attrId, String[].class);
+            Map<String, GameProp> gamePropMap = role.getGamePropMap();
+            StringBuilder stringBuilder = new StringBuilder();
+            for (String gamePropId : gamePropIds) {
+                int index = Integer.parseInt(gamePropId.charAt(gamePropId.length() - 1)+"");
+                GameProp gameProp = gameProps[index];
+                Integer propPrice = gameProp.getPropPrice();
+                if (gold>=propPrice){
+                    gold -= propPrice;
+                    if (gamePropMap.containsKey(gameProp.getId())){
+                        GameProp gameProp1 = gamePropMap.get(gameProp.getId());
+                        gameProp.setTheNumber(gameProp1.getTheNumber()+1);
+                    }else {
+                        gamePropMap.put(gameProp.getId(),gameProp);
+                    }
+                    stringBuilder.append("你购买了");
+                    stringBuilder.append(gameProp.getPropName());
+                    stringBuilder.append("&#10;");
+                }else {
+                    role.setGold(gold);
+                    ResultEntity<Integer> resultEntity = ResultEntity.failed("金钱不够了");
+                    resultEntity.setMessage(stringBuilder.toString());
+                    return resultEntity;
+                }
+            }
+            role.setGold(gold);
+            ResultEntity<Integer> resultEntity = ResultEntity.successWithData(role.getGold());
+            resultEntity.setMessage(stringBuilder.toString());
+            return resultEntity;
+
+        }
+        return ResultEntity.failed("购买失败，下次再来");
+    }
+
+    /**
+     * 触发商店
+     * @param session
+     * @param roleId
+     * @return
+     */
+    @RequestMapping("/getStore")
+    @RoleRequire(roles = 1)
+    @ResponseBody
+    public ResultEntity<GameProp[]> getStore(HttpServletRequest request, HttpSession session, String roleId, String attr){
+        if (RlifeUtil.userLoginCheckAndRole(request,roleId,roleService).getResult().equals(ResultEntity.SUCCESS)){
+            GameMap<Game1>[][] gameMaps = (GameMap<Game1>[][])session.getAttribute("game1GameMapLists" + roleId);
+            String[] split = attr.split(",");
+            Game1 data = gameMaps[Integer.parseInt(split[0])][Integer.parseInt(split[1])].getData();
+            GameStore store = data.getStore();
+            if (store!=null){
+                session.setAttribute("gameStore" + roleId,store);
+                data.setStore(null);
+                return ResultEntity.successWithData(store.getGameProps());
+            }
+        }
+        return ResultEntity.failed("商店正在进货");
+    }
+
+    /**
+     * 获取全清奖励
+     * @param session
+     * @param roleId
+     * @return
+     */
+    @RequestMapping("/triggerAllClearReward")
+    @RoleRequire(roles = 1)
+    @ResponseBody
+    public ResultEntity<List<Reward>> triggerAllClearReward(HttpServletRequest request, HttpSession session, String roleId){
+        if (RlifeUtil.userLoginCheckAndRole(request,roleId,roleService).getResult().equals(ResultEntity.SUCCESS)){
+            Role role = (Role)session.getAttribute("role" + roleId);
+            if (role.isReward()){
+                int layerNumber = role.getLayerNumber();
+                List<Reward> rewardList = new ArrayList<>();
+                Random random = new Random();
+                Set<Integer> set = new HashSet<>();
+                while (set.size()<3) {
+                    int i = random.nextInt(4) + 1;
+                    set.add(i);
+                }
+
+                Iterator<Integer> iterator = set.iterator();
+                while (iterator.hasNext()){
+                    Integer rewardId = iterator.next();
+                    //根据奖励的id和层数返回Reward对象
+                    Reward reward = RewardS.getRewardByIdAndLayer(rewardId, layerNumber);
+                    rewardList.add(reward);
+                }
+                role.setRewardList(rewardList);
+                role.setReward(false);
+                return ResultEntity.successWithData(rewardList);
+            }
+
+        }
+        return ResultEntity.failed("正在获取全清奖励");
+    }
+
+    /**
+     * 领取全清奖励，并返回下一层地图
+     * @param session
+     * @param roleId
+     * @return
+     */
+    @RequestMapping("/getAllClearReward")
+    @RoleRequire(roles = 1)
+    @ResponseBody
+    public ResultEntity<GameMap<GameVO>[][]> getAllClearReward(HttpServletRequest request, HttpSession session, String roleId,int index){
+        if (RlifeUtil.userLoginCheckAndRole(request,roleId,roleService).getResult().equals(ResultEntity.SUCCESS)){
+            Role role = (Role)session.getAttribute("role" + roleId);
+            List<Reward> rewardList = role.getRewardList();
+            if (rewardList!=null){
+                Reward reward = rewardList.get(index);
+                StringBuilder stringBuilder = new StringBuilder();
+                RewardS.getRewardByIndex(reward.getRewardNo(),role,stringBuilder);
+                stringBuilder.append("&#10;");
+                role.setRewardList(null);
+
+                //加载下一层地图
+                role.setLayerNumber(role.getLayerNumber()+1);
+                GameMap<Game1>[][] gameMaps1 = Game.game1(role, role.getDifficulty(), monsterGame1Map, suffixClassList, boxMap, roomMap);
+                //下一层时保存地图存档
+                Game1Utils.saveInfo(request,role,redisUtil,gameMaps1);
+                ResultEntity<GameMap<GameVO>[][]> resultEntity = ResultEntity.successWithData(GameUtils.GameMapPO2VO(gameMaps1));
+                resultEntity.setMessage(stringBuilder.toString());
+                return resultEntity;
+            }
+        }
+        return ResultEntity.failed("正在获取全清奖励");
     }
 
     /**
      * 前端获取角色数据
      * @param session
-     * @param request
      * @param roleId
      * @return
      */
     @RequestMapping("/getRole")
     @RoleRequire(roles = 1)
     @ResponseBody
-    public ResultEntity<Role> getRole(HttpSession session,HttpServletRequest request,String roleId){
-
-        Role role = (Role)session.getAttribute("role" + roleId);
-        return ResultEntity.successWithData(role);
+    public ResultEntity<Role> getRole(HttpServletRequest request,HttpSession session,String roleId){
+        if (RlifeUtil.userLoginCheckAndRole(request,roleId,roleService).getResult().equals(ResultEntity.SUCCESS)){
+            Role role = (Role)session.getAttribute("role" + roleId);
+            return ResultEntity.successWithData(role);
+        }
+        return ResultEntity.failed("正在加载角色信息");
     }
 
     /**
      * 对角色进行升级
      * @param session
-     * @param request
      * @param roleId
      * @return
      */
     @RequestMapping("/leaveUP")
     @RoleRequire(roles = 1)
     @ResponseBody
-    public ResultEntity<Role> leaveUP(HttpSession session,HttpServletRequest request,String roleId){
+    public ResultEntity<Role> leaveUP(HttpSession session,String roleId){
 
         GameMap<Game1>[][] game1GameMapLists = (GameMap<Game1>[][])session.getAttribute("game1GameMapLists" + roleId);
         Role role = (Role)session.getAttribute("role" + roleId);
@@ -193,24 +369,19 @@ public class GameController {
         session.setAttribute("game1GameMapLists" + roleId,game1GameMapLists);
         session.setAttribute("role" + roleId,role);
 
-        Role role1 = new Role();
-        role1.setId(role.getId());
-        role1.setRoleLeave(role.getRoleLeave());
-        roleService.updateRoleByKey(role1);
         return ResultEntity.successWithData(role);
     }
 
     /**
-     * 体质加点
+     * 最大生命加点
      * @param session
-     * @param request
      * @param roleId
      * @return
      */
     @RequestMapping("/physicalLittle")
     @RoleRequire(roles = 1)
     @ResponseBody
-    public ResultEntity<Role> physicalLittle(HttpSession session,HttpServletRequest request,String roleId){
+    public ResultEntity<Role> physicalLittle(HttpSession session,String roleId){
 
         GameMap<Game1>[][] game1GameMapLists = (GameMap<Game1>[][])session.getAttribute("game1GameMapLists" + roleId);
         Role role = (Role)session.getAttribute("role" + roleId);
@@ -218,7 +389,7 @@ public class GameController {
         Integer freelyDistributable = role.getFreelyDistributable();
         if (freelyDistributable>0){
             freelyDistributable--;
-            RoleAttribute.basePhysicalRange(role,1);
+            RoleAttribute.lifeMaxRange(role,5);
             role.setFreelyDistributable(freelyDistributable);
         }else {
             return ResultEntity.failed("可分配的自由点不足");
@@ -228,30 +399,19 @@ public class GameController {
         session.setAttribute("game1GameMapLists" + roleId,game1GameMapLists);
         session.setAttribute("role" + roleId,role);
 
-        Role role1 = new Role();
-        role1.setId(role.getId());
-        role1.setPhysical(role.getPhysical());
-        role1.setBasePhysical(role.getPhysical());
-        role1.setBaseLife(role.getBaseLife());
-        role1.setLife(role.getBaseLife());
-        role1.setBaseDefense(role.getBaseDefense());
-        role1.setDefense(role.getBaseDefense());
-        roleService.updateRoleByKey(role1);
-
         return ResultEntity.successWithData(role);
     }
 
     /**
-     * 力量加点
+     * 攻击加点
      * @param session
-     * @param request
      * @param roleId
      * @return
      */
     @RequestMapping("/powerLittle")
     @RoleRequire(roles = 1)
     @ResponseBody
-    public ResultEntity<Role> powerLittle(HttpSession session,HttpServletRequest request,String roleId){
+    public ResultEntity<Role> powerLittle(HttpSession session,String roleId){
 
         GameMap<Game1>[][] game1GameMapLists = (GameMap<Game1>[][])session.getAttribute("game1GameMapLists" + roleId);
         Role role = (Role)session.getAttribute("role" + roleId);
@@ -259,7 +419,7 @@ public class GameController {
         Integer freelyDistributable = role.getFreelyDistributable();
         if (freelyDistributable>0){
             freelyDistributable--;
-            RoleAttribute.basePowerRange(role,1);
+            RoleAttribute.attackRange(role,2);
             role.setFreelyDistributable(freelyDistributable);
         }else {
             return ResultEntity.failed("可分配的自由点不足");
@@ -269,28 +429,19 @@ public class GameController {
         session.setAttribute("game1GameMapLists" + roleId,game1GameMapLists);
         session.setAttribute("role" + roleId,role);
 
-        Role role1 = new Role();
-        role1.setId(role.getId());
-        role1.setPower(role.getPower());
-        role1.setBasePower(role.getPower());
-        role1.setBaseAttack(role.getBaseAttack());
-        role1.setAttack(role.getBaseAttack());
-        roleService.updateRoleByKey(role1);
-
         return ResultEntity.successWithData(role);
     }
 
     /**
-     * 敏捷加点
+     * 防御加点
      * @param session
-     * @param request
      * @param roleId
      * @return
      */
     @RequestMapping("/agilityLittle")
     @RoleRequire(roles = 1)
     @ResponseBody
-    public ResultEntity<Role> agilityLittle(HttpSession session,HttpServletRequest request,String roleId){
+    public ResultEntity<Role> agilityLittle(HttpSession session,String roleId){
 
         GameMap<Game1>[][] game1GameMapLists = (GameMap<Game1>[][])session.getAttribute("game1GameMapLists" + roleId);
         Role role = (Role)session.getAttribute("role" + roleId);
@@ -298,7 +449,7 @@ public class GameController {
         Integer freelyDistributable = role.getFreelyDistributable();
         if (freelyDistributable>0){
             freelyDistributable--;
-            RoleAttribute.baseAgilityRange(role,1);
+            RoleAttribute.defenseRange(role,1);
             role.setFreelyDistributable(freelyDistributable);
         }else {
             return ResultEntity.failed("可分配的自由点不足");
@@ -308,30 +459,19 @@ public class GameController {
         session.setAttribute("game1GameMapLists" + roleId,game1GameMapLists);
         session.setAttribute("role" + roleId,role);
 
-        Role role1 = new Role();
-        role1.setId(role.getId());
-        role1.setAgility(role.getAgility());
-        role1.setBaseAgility(role.getAgility());
-        role1.setBaseAttack(role.getBaseAttack());
-        role1.setAttack(role.getBaseAttack());
-        role1.setBaseAttackSpeed(role.getBaseAttackSpeed());
-        role1.setAttackSpeed(role.getBaseAttackSpeed());
-        roleService.updateRoleByKey(role1);
-
         return ResultEntity.successWithData(role);
     }
 
     /**
-     * 精神加点
+     * 最大魔法加点
      * @param session
-     * @param request
      * @param roleId
      * @return
      */
     @RequestMapping("/mindLittle")
     @RoleRequire(roles = 1)
     @ResponseBody
-    public ResultEntity<Role> mindLittle(HttpSession session,HttpServletRequest request,String roleId){
+    public ResultEntity<Role> mindLittle(HttpSession session,String roleId){
 
         GameMap<Game1>[][] game1GameMapLists = (GameMap<Game1>[][])session.getAttribute("game1GameMapLists" + roleId);
         Role role = (Role)session.getAttribute("role" + roleId);
@@ -339,7 +479,7 @@ public class GameController {
         Integer freelyDistributable = role.getFreelyDistributable();
         if (freelyDistributable>0){
             freelyDistributable--;
-            RoleAttribute.baseMindRange(role,1);
+            RoleAttribute.magicMaxRange(role,5);
             role.setFreelyDistributable(freelyDistributable);
         }else {
             return ResultEntity.failed("可分配的自由点不足");
@@ -348,16 +488,6 @@ public class GameController {
         GameCommon.roleUpdate(game1GameMapLists,role);
         session.setAttribute("game1GameMapLists" + roleId,game1GameMapLists);
         session.setAttribute("role" + roleId,role);
-
-        Role role1 = new Role();
-        role1.setId(role.getId());
-        role1.setMind(role.getBaseMind());
-        role1.setBaseMind(role.getBaseMind());
-        role1.setBaseMagic(role.getBaseMagic());
-        role1.setMagic(role.getBaseMagic());
-        role1.setBaseDef(role.getBaseDef());
-        role1.setDef(role.getBaseDef());
-        roleService.updateRoleByKey(role1);
 
         return ResultEntity.successWithData(role);
     }

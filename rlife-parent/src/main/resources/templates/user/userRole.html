@@ -213,16 +213,16 @@
                                     等级
                                 </td>
                                 <td>
-                                    体质
+                                    最大生命
                                 </td>
                                 <td>
-                                    力量
+                                    攻击
                                 </td>
                                 <td>
-                                    敏捷
+                                    防御
                                 </td>
                                 <td>
-                                    精神
+                                    最大魔法
                                 </td>
                                 <td>
                                     存活状态
@@ -304,10 +304,10 @@
 
                     content += "<td>"+n.nickname +"</td>"
                     content += "<td>"+n.roleLeave +"</td>"
-                    content += "<td>"+n.physical +"</td>"
-                    content += "<td>"+n.power +"</td>"
-                    content += "<td>"+n.agility +"</td>"
-                    content += "<td>"+n.mind +"</td>"
+                    content += "<td>"+n.lifeMax +"</td>"
+                    content += "<td>"+n.attack +"</td>"
+                    content += "<td>"+n.defense +"</td>"
+                    content += "<td>"+n.magicMax +"</td>"
                     if (n.survive==0){
                         content += "<td>"+"存活" +"</td>"
                     }else {
@@ -350,10 +350,10 @@
 
                     content += "<td>"+n.nickname +"</td>"
                     content += "<td>"+n.roleLeave +"</td>"
-                    content += "<td>"+n.physical +"</td>"
-                    content += "<td>"+n.power +"</td>"
-                    content += "<td>"+n.agility +"</td>"
-                    content += "<td>"+n.mind +"</td>"
+                    content += "<td>"+n.lifeMax +"</td>"
+                    content += "<td>"+n.attack +"</td>"
+                    content += "<td>"+n.defense +"</td>"
+                    content += "<td>"+n.magicMax +"</td>"
                     if (n.survive==0){
                         content += "<td>"+"存活" +"</td>"
                     }else {
@@ -406,10 +406,10 @@
 
                 var content = "";
                 content += "            <p>新角色：</p>\n" +
-                    "            <p>体质："+data.physical+"</p>\n" +
-                    "            <p>力量："+data.power+"</p>\n" +
-                    "            <p>敏捷："+data.agility+"</p>\n" +
-                    "            <p>精神："+data.mind+"</p>\n" +
+                    "            <p>最大生命："+data.lifeMax+"</p>\n" +
+                    "            <p>最大魔法："+data.magicMax+"</p>\n" +
+                    "            <p>攻击："+data.attack+"</p>\n" +
+                    "            <p>防御："+data.defense+"</p>\n" +
                     "            <p>可自由分配属性点："+data.freelyDistributable+"</p>"
 
                 $("#roleNew").html(content);
@@ -433,10 +433,10 @@
 
                 var content = "";
                 content += "            <p>新角色：</p>\n" +
-                    "            <p>体质："+data.physical+"</p>\n" +
-                    "            <p>力量："+data.power+"</p>\n" +
-                    "            <p>敏捷："+data.agility+"</p>\n" +
-                    "            <p>精神："+data.mind+"</p>\n" +
+                    "            <p>最大生命："+data.lifeMax+"</p>\n" +
+                    "            <p>最大魔法："+data.magicMax+"</p>\n" +
+                    "            <p>攻击："+data.attack+"</p>\n" +
+                    "            <p>防御："+data.defense+"</p>\n" +
                     "            <p>可自由分配属性点："+data.freelyDistributable+"</p>"
 
                 $("#roleNew").html(content);
@@ -492,10 +492,10 @@
 
                         content += "<td>"+n.nickname +"</td>"
                         content += "<td>"+n.roleLeave +"</td>"
-                        content += "<td>"+n.physical +"</td>"
-                        content += "<td>"+n.power +"</td>"
-                        content += "<td>"+n.agility +"</td>"
-                        content += "<td>"+n.mind +"</td>"
+                        content += "<td>"+n.lifeMax +"</td>"
+                        content += "<td>"+n.attack +"</td>"
+                        content += "<td>"+n.defense +"</td>"
+                        content += "<td>"+n.magicMax +"</td>"
                         if (n.survive==0){
                             content += "<td>"+"存活" +"</td>"
                         }else {
@@ -543,10 +543,10 @@
 
                     content += "<td>"+n.nickname +"</td>"
                     content += "<td>"+n.roleLeave +"</td>"
-                    content += "<td>"+n.physical +"</td>"
-                    content += "<td>"+n.power +"</td>"
-                    content += "<td>"+n.agility +"</td>"
-                    content += "<td>"+n.mind +"</td>"
+                    content += "<td>"+n.lifeMax +"</td>"
+                    content += "<td>"+n.attack +"</td>"
+                    content += "<td>"+n.defense +"</td>"
+                    content += "<td>"+n.magicMax +"</td>"
                     if (n.survive==0){
                         content += "<td>"+"存活" +"</td>"
                     }else {

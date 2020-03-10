@@ -1,6 +1,6 @@
 package com.fyt.rlife.rlife.service.gameService;
 
-import com.fyt.rlife.rlife.bean.game.common.Store;
+import com.fyt.rlife.rlife.bean.Store;
 
 /**
  * @Author: fanyitai
@@ -10,7 +10,7 @@ import com.fyt.rlife.rlife.bean.game.common.Store;
 public interface StoreService {
     Store getStoreByUserId(String memberId);
 
-    void updateStore(Store store,String userId);
+    void updateStore(Store store, String userId);
 
     void insertStore(String userId);
 }

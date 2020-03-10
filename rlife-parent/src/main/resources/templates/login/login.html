@@ -51,6 +51,8 @@
           <label style="float:right">
             <a href="/toReg">我要注册</a>
           </label>
+            <br>
+            社交登陆： <img  src="../img/QQ_login.jpg" width="15px" onclick="qq_login()">
         </div>
         <a class="btn btn-lg btn-success btn-block" onclick="doLogin()" > 登录</a>
       </form>
@@ -68,12 +70,22 @@
             $.post("/login",{"username":username,"userpswd":userpswd},function (ResultEntity) {
                 if (ResultEntity.result == "SUCCESS"){
                     alert("登陆成功");
-                    //跳转到首页
                     window.location.href = "index";
                 }else {
                     alert(ResultEntity.message);
                 }
             })
+        }
+
+        function qq_login() {
+            {
+                //以下为按钮点击事件的逻辑。注意这里要重新打开窗口
+                //否则后面跳转到QQ登录，授权页面时会直接缩小当前浏览器的窗口，而不是打开新窗口
+                /*var A=window.open("oauth/index.php","TencentLogin",
+                    "width=450,height=320,menubar=0,scrollbars=1,resizable=1,status=1,titlebar=0,toolbar=0,location=1");*/
+                var a = encodeURI("http://192.168.1.102/qq_login");
+                window.location.href="https://graph.qq.com/oauth2.0/authorize?response_type=code&client_id=[YOUR_APPID]&redirect_uri="+a+"&scope=get_user_info"
+            }
         }
     </script>
   </body>

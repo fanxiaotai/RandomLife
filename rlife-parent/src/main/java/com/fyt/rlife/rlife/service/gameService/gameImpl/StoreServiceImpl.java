@@ -1,7 +1,7 @@
 package com.fyt.rlife.rlife.service.gameService.gameImpl;
 
 import com.alibaba.fastjson.JSON;
-import com.fyt.rlife.rlife.bean.game.common.Store;
+import com.fyt.rlife.rlife.bean.Store;
 import com.fyt.rlife.rlife.mapper.StoreMapper;
 import com.fyt.rlife.rlife.service.gameService.StoreService;
 import com.fyt.rlife.rlife.util.RedisUtil;

@@ -1,13 +1,6 @@
 package com.fyt.rlife.rlife.game.skill;
 
 import com.fyt.rlife.rlife.bean.Role;
-import com.fyt.rlife.rlife.bean.game.Game1;
-import com.fyt.rlife.rlife.bean.game.common.Skill;
-import com.fyt.rlife.rlife.bean.vo.GameMap;
-import com.fyt.rlife.rlife.game.GameCommon;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * @Author: fanyitai
@@ -23,7 +16,7 @@ public class SkillUse {
      * @param skillId
      * @return
      */
-    public static String skillUse(Role role, GameMap<Game1>[][] gameMap, String skillId){
+    /*public static String skillUse(Role role, GameMap<Game1>[][] gameMap, String skillId){
         if (skillId.startsWith("1")){
             if ("101".equals(skillId)){
                 if (!magicSkillConsume(role,10)){
@@ -86,7 +79,7 @@ public class SkillUse {
         }
         GameCommon.roleUpdate(gameMap,role);
         return "success";
-    }
+    }*/
 
     /**
      * 蓝量判断
@@ -112,7 +105,7 @@ public class SkillUse {
      * @param roundNum
      * @return
      */
-    public static boolean fightStateMapPut(Role role,String state,int roundNum){
+/*    public static boolean fightStateMapPut(Role role,String state,int roundNum){
         try {
             Map<String,Integer> map = role.getFightStateAttackMap();
             if (map==null){
@@ -125,7 +118,7 @@ public class SkillUse {
             e.printStackTrace();
             return false;
         }
-    }
+    }*/
 
     /**
      * 添加战斗前的状态
@@ -134,7 +127,7 @@ public class SkillUse {
      * @param roundNum
      * @return
      */
-    public static boolean fightBeforeStateMapPut(Role role,String state,int roundNum){
+    /*public static boolean fightBeforeStateMapPut(Role role,String state,int roundNum){
         try {
             Map<String,Integer> map = role.getFightBeforeStateMap();
             if (map==null){
@@ -147,7 +140,7 @@ public class SkillUse {
             e.printStackTrace();
             return false;
         }
-    }
+    }*/
 
     /**
      * 添加战斗后的状态
@@ -156,7 +149,7 @@ public class SkillUse {
      * @param roundNum
      * @return
      */
-    public static boolean fightAfterStateMapPut(Role role,String state,int roundNum){
+    /*public static boolean fightAfterStateMapPut(Role role,String state,int roundNum){
         try {
             Map<String,Integer> map = role.getFightAfterStateMap();
             if (map==null){
@@ -169,12 +162,12 @@ public class SkillUse {
             e.printStackTrace();
             return false;
         }
-    }
+    }*/
 
     /**
      * 添加移动后的状态
      */
-    public static boolean moveStateMapPut(Role role,String state,int roundNum){
+    /*public static boolean moveStateMapPut(Role role,String state,int roundNum){
         try {
             Map<String,Integer> map = role.getMoveStateMap();
             if (map==null){
@@ -187,12 +180,12 @@ public class SkillUse {
             e.printStackTrace();
             return false;
         }
-    }
+    }*/
 
     /**
      * 添加被动技能
      */
-    public static boolean passiveSkillUse(Role role, Skill skill){
+   /* public static boolean passiveSkillUse(Role role, Skill skill){
         int id = Integer.parseInt(skill.getId());
         if (id<1000){
             if (id == 201){
@@ -205,5 +198,5 @@ public class SkillUse {
 
         return false;
 
-    }
+    }*/
 }

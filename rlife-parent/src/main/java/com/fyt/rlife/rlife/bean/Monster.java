@@ -1,10 +1,12 @@
 package com.fyt.rlife.rlife.bean;
 
-import lombok.AllArgsConstructor;
+import com.fyt.rlife.rlife.game.gamestate.GameState;
+import com.fyt.rlife.rlife.util.GameUtils;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
-import javax.persistence.Id;
+import java.io.Serializable;
+import java.util.List;
+import java.util.Random;
 
 /**
  * @Author: fanyitai
@@ -12,44 +14,39 @@ import javax.persistence.Id;
  * @Version 1.0
  */
 @Data
-@AllArgsConstructor
-@NoArgsConstructor
-public class Monster {
+public abstract class Monster implements Cloneable, Serializable {
 
-    @Id
     private String id;
-    private String nickname; // '角色名称',
-    private Integer physical;  //'体质',
-    private Integer power;  // '力量',
-    private Integer agility;  // '敏捷',
-    private Integer mind;  // '精神',
+    private String nickname; // '怪物名称',
+    private Integer monsterLeave; //怪物等级
+    public String monsterDescribe; //怪物描述
     private Integer attack;  // '攻击',
     private Integer defense;  // '防御',
-    private Double attackSpeed; //'攻速',
-    private Integer moveSpeed;  // '移速',
-    private Integer life;  // '生命',
-    private Integer magic; //魔法
-    private Integer baseMagic; //基础魔法
-    private Integer def; // '魔防',
-    private Integer tenacity;  // '韧性',
-    private Integer baseAttack; //'基础攻击',
-    private Integer baseDefense;  //'基础防御',
-    private Double baseAttackSpeed; // '基础攻速',
-    private Integer baseMoveSpeed;  //'基础移速',
-    private Integer baseLife;  // '基础生命',
-    private Integer basePhysical;  // '基础体质',
-    private Integer basePower;   // '基础力量',
-    private Integer baseAgility;  // '基础敏捷',
-    private Integer baseMind; // '基础精神',
-    private Integer baseDef;  //'基础魔防',
-    private Integer amplification;  // '全属性增幅',
-    private Integer attackAmplification;  // '基础攻击增幅',
-    private Integer magicAmplification;  // '基础魔法增幅',
-    private Integer defenseAmplification;  // '基础防御增幅',
-    private Integer attackSpeedAmplification;  // '基础攻速增幅',
-    private Integer moveSpeedAmplification;  // '基础移速增幅',
-    private Integer lifeAmplification;  // '基础生命增幅',
-    private Integer defAmplification;  // '基础魔防增幅',
+    public Integer life;  // '生命',
     private Integer monsterExp; //击败后可获得经验
-    private Integer monsterLeave; //怪物等级
+    private Integer monsterGold; //击败后可获得金币
+    //private List<GameProp> gameProp; //携带的道具
+
+    public int x; //横坐标
+    public int y; //纵坐标
+
+    /**
+     * 移动行为
+     * @param i 角色横坐标
+     * @param j 角色纵坐标
+     */
+    public abstract void move(int i, int j, StringBuilder stringBuilder, Role role, List<Monster> monsterList,Random random);
+    public void fighting(Role role,StringBuilder stringBuilder,Random random){
+        GameUtils.fighting(role,this,stringBuilder,random);
+        GameState.stateDissipate(role.getFightStateAttackMap(),role,this,stringBuilder);
+    }
+    //攻击行为(战斗行为)
+    public abstract int monsterAttack(int roleLife,int roleDefense,StringBuilder stringBuilder);
+    //死亡行为
+    public abstract void monsterDeath(StringBuilder stringBuilder, Role role, Random random);
+
+    @Override
+    public Object clone() throws CloneNotSupportedException {
+        return super.clone();
+    }
 }
