@@ -106,7 +106,7 @@
         </dependency>
 
         <!--bean类和字符串工具类-->
-    <dependency>
+        <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
             <version>3.4</version>

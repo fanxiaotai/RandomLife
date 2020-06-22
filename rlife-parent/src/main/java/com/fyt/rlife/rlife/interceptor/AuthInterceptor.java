@@ -8,6 +8,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.handler.HandlerInterceptorAdapter;
+import org.springframework.web.servlet.mvc.ParameterizableViewController;
 import org.springframework.web.servlet.resource.ResourceHttpRequestHandler;
 
 import javax.servlet.http.HttpServletRequest;
@@ -24,6 +25,9 @@ public class AuthInterceptor extends HandlerInterceptorAdapter {
 
         //判断被拦截的请求的方法的注解是否需要被拦截
         //强转子类
+        if (handler instanceof ParameterizableViewController){
+            return true;
+        }
         if (handler instanceof ResourceHttpRequestHandler){
             return true;
         }
@@ -57,7 +61,7 @@ public class AuthInterceptor extends HandlerInterceptorAdapter {
             } catch (Exception e) {
                 e.printStackTrace();
                 StringBuffer ReturnUrl = request.getRequestURL();
-                response.sendRedirect("http://www.life.com:80/toLogin?ReturnUrl="+ReturnUrl);
+                response.sendRedirect("http://127.0.0.1:8080/toLogin?ReturnUrl="+ReturnUrl);
                 return false;
             }
             rolesToken = Integer.parseInt((String)claims.get("roles"));
@@ -69,7 +73,7 @@ public class AuthInterceptor extends HandlerInterceptorAdapter {
         }else {
             //重定向passport登陆
             StringBuffer ReturnUrl = request.getRequestURL();
-            response.sendRedirect("http://www.life.com:80/toLogin?ReturnUrl="+ReturnUrl);
+            response.sendRedirect("http://127.0.0.1:8080/toLogin?ReturnUrl="+ReturnUrl);
             return false;
         }
 
@@ -84,7 +88,7 @@ public class AuthInterceptor extends HandlerInterceptorAdapter {
         }else {
             //权限不足，重定向到一个权限不足的提示页面，暂时先重定向到登陆页面
             StringBuffer ReturnUrl = request.getRequestURL();
-            response.sendRedirect("http://www.life.com:80/toLogin?ReturnUrl="+ReturnUrl);
+            response.sendRedirect("http://127.0.0.1:80800/toLogin?ReturnUrl="+ReturnUrl);
             return false;
         }
 

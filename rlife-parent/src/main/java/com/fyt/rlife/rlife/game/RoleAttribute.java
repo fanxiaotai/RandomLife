@@ -82,7 +82,7 @@ public class RoleAttribute {
      */
     public static void lifeMaxRange(Role role, int i) {
         role.setLifeMax(role.getLifeMax()+i);
-        role.setLife(role.getLife()+5);
+        role.setLife(role.getLife()+i);
     }
 
     /**
@@ -104,6 +104,6 @@ public class RoleAttribute {
      */
     public static void magicMaxRange(Role role, int i) {
         role.setMagicMax(role.getMagicMax()+i);
-        role.setMagic(role.getMagic());
+        role.setMagic(role.getMagic()+i);
     }
 }

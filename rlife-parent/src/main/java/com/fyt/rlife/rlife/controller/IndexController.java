@@ -60,4 +60,38 @@ public class IndexController {
 
         return "index";
     }
+
+    @RequestMapping("/")
+    public String index2(ModelMap modelMap, HttpSession session, HttpServletRequest request){
+
+        PageHelper.startPage(0,3);
+        Example example = new Example(Word.class);
+        example.setOrderByClause("heat DESC");
+        List<Word> words = wordMapper.selectByExample(example);
+        modelMap.put("words",words);
+
+        String oldToken = CookieUtil.getCookieValue(request,"oldToken",true);
+        String nickname = null;
+        String memberId = null;
+        Claims claims = null;
+        if (oldToken!=null){
+            JwtUtil jwtUtil = new JwtUtil();
+            try {
+                claims = jwtUtil.parseJWT(oldToken);
+            } catch (Exception e) {
+                System.out.println("返回首页时jwt解析失败");
+                modelMap.put("nickname",nickname);
+                modelMap.put("memberId",memberId);
+                return "index";
+            }
+        }
+        if (claims!=null){
+            memberId = claims.getId();
+            nickname = claims.getSubject();
+        }
+        modelMap.put("nickname",nickname);
+        modelMap.put("memberId",memberId);
+
+        return "index";
+    }
 }
